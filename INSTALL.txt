@@ -1,0 +1,104 @@
+ 
+ Incorporated Research Institutions for Seismology (IRIS)
+ Data Management Center (DMC)
+ Data Products Team
+ horizontal to vertical spectral ratio (HVSR)
+
+ 2017-11-16
+
+----------------------------------------------------------------------------------------------------------------------------------------
+
+ DESCRIPTION:
+
+ An IRIS DMC Python script bundle to compute and plot  horizontal to vertical spectral ratio (HVSR) curves using MUSTANG PDF-PSD web service from IRI.S
+ The bundle contains 2 Python scripts:
+
+   - computeStationChannelBaseline.py is a Python script that uses MUSTANG's noise-pdf (http://service.iris.edu/mustang/) web service to 
+     compute channel-specific noise-baseline for a given station (McNamara et al., 2009) the resulting baseline represents the long-term PSD PDF 
+     characteristics of the station-channel pair in the form of median, lower and higher percentiles of the available PSDs for the station.
+
+ PYTHON REQUIREMENTS:
+
+    Basic installation:
+       - this bundle was created and tested under Python 3.5.3;
+
+       - additional required Python module(s): 
+             . numpy  1.11.3
+             . obspy   1.0.2
+
+ BUNDLE INSTALLATION:
+    - bin, lib and param directories and their contents are required. Other needed directories will be created by the script
+
+ CONFIGURE THE PACKAGE:
+    - update the Python path on the first line of the bin/computeStationChannelBaseline.py script 
+    - configure the package by updating param/getStationChannelBaseline_param.py, if needed
+
+ PACKAGE TEST:
+    - To test the package, run the script with no arguments and it should print the following USAGE text:
+
+              bin/getStationChannelBaseline.py
+
+
+
+              ==================
+              [INFO] getStationChannelBaseline.py, getStationChannelBaseline_param, R.2017320
+              [INFO] Param Path: /HVSR/param
+              [INFO] libraryPath: /HVSR/lib
+              [INFO] loaded: getStationChannelBaseline_param
+
+              [ERROR] missing parameter net
+
+
+
+              USAGE(R.2017320):
+
+              getStationChannelBaseline.py net=netName sta=staName loc=locCode chan=chanCode start=2007-03-19 end=2008-10-28 plot=[0,1] verbose=[0,1] percentlow=[10] percenthigh=[90] xtype=[period,frequency]
+              getStationChannelBaseline.py net=IU sta=ANMO loc=00 chan=BHZ start=2002-11-19 end=2008-11-13 plot=1 verbose=1 percentlow=10 percenthigh=90
+
+              ==================
+
+
+    - To verify that script is properly configured, run the following:
+
+              bin/getStationChannelBaseline.py net=IU sta=ANMO loc=00 start=2002-11-19 end=2008-11-13 plot=1
+
+              by executing the above command, you should get the following message and the following files will be created:
+                         /HVSR/data/baseline/IU.ANMO.00.BHZ.txt
+                         /HVSR/data/baseline/IU.ANMO.00.BH1.txt
+                         /HVSR/data/baseline/IU.ANMO.00.BH2.txt
+                         /HVSR/image/baseline/IU.ANMO.00.BHZ-BH1-BH2_period.png   
+
+             ==================
+             [INFO] getStationChannelBaseline.py, getStationChannelBaseline_param, R.2017320
+             [INFO] Param Path: /HVSR/param
+             [INFO] libraryPath: /HVSR/lib
+             [INFO] loaded: getStationChannelBaseline_param
+             [INFO] net: IU
+             [INFO] sta: ANMO
+             [INFO] loc: 00
+             [INFO] start: 2002-11-19
+             [INFO] end: 2008-11-13
+             [INFO] plot: 1
+             [INFO] requesting IU.ANMO.00.BHZ.M from 2002-11-19 to 2008-11-13
+             [INFO] waiting for reply....
+             [INFO] baseline file:/HVSR/data/baseline/IU.ANMO.00.BHZ.txt
+             [INFO] PLOT Station-Channel Baseline
+             [INFO] requesting IU.ANMO.00.BH1.M from 2002-11-19 to 2008-11-13
+             [INFO] waiting for reply....
+             [INFO] baseline file:/HVSR/data/baseline/IU.ANMO.00.BH1.txt
+             [INFO] PLOT Station-Channel Baseline
+             [INFO] requesting IU.ANMO.00.BH2.M from 2002-11-19 to 2008-11-13
+             [INFO] waiting for reply....
+             [INFO] baseline file:/HVSR/data/baseline/IU.ANMO.00.BH2.txt
+             [INFO] PLOT Station-Channel Baseline
+             [INFO] Saved plot file: /HVSR/image/baseline/IU.ANMO.00.BHZ-BH1-BH2_period.png
+             [INFO] Show
+             ==================
+
+REFERENCES:
+
+McNamara D.E., C.R. Hutt, L.S. Gee, H.M. Benz, and R.P. Buland, 2009, A method to establish seismic noise baselines for automated station assessment, Seismological Research Letters Jul 2009, 80 (4) 628-637; 
+DOI: 10.1785/gssrl.80.4.628.  http://srl.geoscienceworld.org/content/gssrl/80/4/628.full.pdf
+
+
+

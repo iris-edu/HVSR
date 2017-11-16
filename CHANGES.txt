@@ -1,0 +1,14 @@
+bin/getStationChannelBaseline.py
+    2017-11-16 IRIS DMC Product Team (Manoch): public release (R.2017320)
+    2017-03-12 IRIS DMC Product Team (Manoch): created (R.2017071)
+
+
+lib/fileLib.py
+    2015-05-19 IRIS DMC Product Team (Manoch): created (R.2015139)
+
+lib/msgLib.py
+    2015-05-19 IRIS DMC Product Team (Manoch): created (R.2015139)
+
+param/getStationChannelBaseline_param.py
+    2017-11-16 IRIS DMC Product Team (Manoch): public release (R.2017320)
+    2017-03-12 IRIS DMC Product Team (Manoch): created (R.2017071)
