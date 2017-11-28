@@ -17,6 +17,10 @@
      compute channel-specific noise-baseline for a given station (McNamara et al., 2009) the resulting baseline represents the long-term PSD PDF 
      characteristics of the station-channel pair in the form of median, lower and higher percentiles of the available PSDs for the station.
 
+   - computeHVSR.py - is a Python script that uses IRIS DMC's MUSTANG noise-psd/pdf web services (http://service.iris.edu/mustang/) to
+     compute horizontal-to-vertical spectral ratio (HVSR) for a given station, after removing PSDs that fall outside the station noise baseline
+     computed by computeStationChannelBaseline.py.
+
  PYTHON REQUIREMENTS:
 
     Basic installation:
@@ -30,11 +34,11 @@
     - bin, lib and param directories and their contents are required. Other needed directories will be created by the script
 
  CONFIGURE THE PACKAGE:
-    - update the Python path on the first line of the bin/computeStationChannelBaseline.py script 
-    - configure the package by updating param/getStationChannelBaseline_param.py, if needed
+    - update the Python path on the first line of the bin/computeStationChannelBaseline.py and bin/computeHVSR.py scripts 
+    - configure the package by updating param/getStationChannelBaseline_param.py and param/computeHVSR_param.py files, if needed
 
  PACKAGE TEST:
-    - To test the package, run the script with no arguments and it should print the following USAGE text:
+    - To test the package, run the scriptwith no arguments and cwtheyit should print the following USAGE texts:
 
               bin/getStationChannelBaseline.py
 
@@ -54,6 +58,26 @@
 
               getStationChannelBaseline.py net=netName sta=staName loc=locCode chan=chanCode start=2007-03-19 end=2008-10-28 plot=[0,1] verbose=[0,1] percentlow=[10] percenthigh=[90] xtype=[period,frequency]
               getStationChannelBaseline.py net=IU sta=ANMO loc=00 chan=BHZ start=2002-11-19 end=2008-11-13 plot=1 verbose=1 percentlow=10 percenthigh=90
+
+
+              bin/computeHVSR.py 
+
+              bin/computeHVSR.py R.2017332
+
+              [ERROR] missing parameter net
+
+
+
+              USAGE(R.2017332):
+
+
+                            network station location channel list     start date       end date  plot(1/0) plot      plot accepted     verbose    y-axis x-axis type     break start-end
+                                |       |       |    |                |                 |             | rejected     accepted    plot  output(1/0)  max      |           interval into "n"
+                                |       |       |    |                |                 |             |   PSDs(1/0)   PSDs(1/0)  PDFs(1/0) |         |       |              | segments
+                                |       |       |    |                |                 |             |       |         |        |         |         |       |              |
+                 computeHVSR.py net=TA sta=TCOL loc= chan=BHZ,BHN,BHE start=2013-01-01 end=2013-01-01 plot=1 plotbad=0 plotpsd=0 plotpdf=1 verbose=1 ymax=5 xtype=frequency n=1
+
+              any parameter given on the command line will override the one defined in the parameter file
 
               ==================
 
@@ -94,6 +118,82 @@
              [INFO] Saved plot file: /HVSR/image/baseline/IU.ANMO.00.BHZ-BH1-BH2_period.png
              [INFO] Show
              ==================
+
+
+bin/computeHVSR.py net=IU sta=ANMO loc=00 chan=BHZ,BH1,BH2 start=2007-05-01 end=2007-06-01 plot=1 verbose=1 ylim=5
+
+ bin/computeHVSR.py R.2017332
+[INFO] requesting IU.ANMO.00.BHZ.M from 2007-05-01 to 2007-06-01
+[INFO] requesting:http://service.iris.edu/mustang/noise-psd/1/query?target=IU.ANMO.00.BHZ.M&starttime=2007-05-01T00:00:00&endtime=2007-05-07T00:00:00&format=xml&correct=true
+[TIME] 2.74703311920166 seconds
+[INFO] PSD waiting for reply....
+[INFO] PsdRoot
+[INFO] PSD: 282
+[TIME] 12.23190188407898 seconds
+[INFO] requesting:http://service.iris.edu/mustang/noise-pdf/1/query?target=IU.ANMO.00.BHZ.M&starttime=2007-05-01&endtime=2007-05-07&format=text
+[INFO] PDF waiting for reply....
+[INFO] PDF: 1683
+[INFO] requesting:http://service.iris.edu/mustang/noise-psd/1/query?target=IU.ANMO.00.BHZ.M&starttime=2007-05-07T00:00:00&endtime=2007-05-13T00:00:00&format=xml&correct=true
+[TIME] 0.32018470764160156 seconds
+[INFO] PSD waiting for reply....
+[INFO] PsdRoot
+[INFO] PSD: 282
+[TIME] 0.3385143280029297 seconds
+[INFO] requesting:http://service.iris.edu/mustang/noise-pdf/1/query?target=IU.ANMO.00.BHZ.M&starttime=2007-05-07&endtime=2007-05-13&format=text
+[INFO] PDF waiting for reply....
+[INFO] PDF: 3224
+[INFO] requesting:http://service.iris.edu/mustang/noise-psd/1/query?target=IU.ANMO.00.BHZ.M&starttime=2007-05-13T00:00:00&endtime=2007-05-19T00:00:00&format=xml&correct=true
+[TIME] 0.0759131908416748 seconds
+[INFO] PSD waiting for reply....
+[INFO] PsdRoot
+[INFO] PSD: 282
+[TIME] 0.30437350273132324 seconds
+[INFO] requesting:http://service.iris.edu/mustang/noise-pdf/1/query?target=IU.ANMO.00.BHZ.M&starttime=2007-05-13&endtime=2007-05-19&format=text
+[INFO] PDF waiting for reply....
+[INFO] PDF: 4771
+....
+....
+....
+[TIME] 0.10915803909301758 seconds
+[INFO] SAVE MEDIAN DAILY
+[INFO] HVSR computation
+[WARNING from bin/computeHVSR.py] 2007-05-08 missing component, skipped!
+[WARNING from bin/computeHVSR.py] 2007-05-12 missing component, skipped!
+[WARNING from bin/computeHVSR.py] 2007-05-14 missing component, skipped!
+[WARNING from bin/computeHVSR.py] 2007-05-15 missing component, skipped!
+....
+....
+....
+[WARNING from bin/computeHVSR.py] 2007-05-30 missing component, skipped!
+[WARNING from bin/computeHVSR.py] 2007-05-30 missing component, skipped!
+[WARNING from bin/computeHVSR.py] 2007-05-30 missing component, skipped!
+[WARNING from bin/computeHVSR.py] 2007-05-30 missing component, skipped!
+
+
+Peaks:
+Parameters and ranking based on SESAME 2004 (A0: peak amplitude, f0: peak frequency):
+
+- amplitude clarity conditions:
+    . there exist one frequency f-, lying between f0/4 and f0, such that A0 / A(f-) > 2
+    . there exist one frequency f+, lying between f0 and 4*f0, such that A0 / A(f+) > 2
+    . A0 > 2
+
+- amplitude stability conditions:
+    . peak appear within +/-5% on H/V curves of mean +/- one standard deviation (f0+/f0-)
+    . σf lower than a frequency dependent threshold ε(f)
+    . σA lower than a frequency dependent threshold log θ(f)
+
+
+                               Net.Sta.Loc.Chan     f0             A0 > 2              f-            f+           f0- within ±5% of f0 &           f0+ within ±5% of f0                  σf < ε * f0           σlogH/V < logθ        Score/Max.    
+================================================ ========== ====================== ============ ============ ================================ ================================ =========================== ====================== =================
+
+   IU.ANMO.00.BHZ-BH1-BH2 2007-05-01 2007-06-01      9.051           1.04 > 2.0              -            -                              - &      9.051 within ±5% of 9.051       0.0004 < 0.05 * 9.051 ✓        0.0657 < 0.20 ✓            2/6
+
+SHOW
+
+NOTE: At the end of the run a plot should appear
+
+
 
 REFERENCES:
 
