@@ -1,5 +1,5 @@
-#!/anaconda/3/bin/python
-# -*- coding: UTF-8 -*-
+#!/usr/bin/env python
+#
 #
 ################################################################################################
 #
@@ -7,7 +7,7 @@
 #       to compute channel-specific noise-baseline for a given station. The algorithm is based on
 #       McNamara et al. (2009)
 #
-# Copyright (C) 2017  Product Team, IRIS Data Management Center
+# Copyright (C) 2018  Product Team, IRIS Data Management Center
 #
 #    This is a free software; you can redistribute it and/or modify
 #    it under the terms of the GNU Lesser General Public License as
@@ -37,7 +37,9 @@
 #
 # HISTORY:
 #
-#    2017-11-16 IRIS DMC Product Team (Manoch): public release (R.2017320)
+#
+#    2018-07-10 IRIS DMC Product Team (Manoch): prerelease version R.2018191
+#    2017-11-16 IRIS DMC Product Team (Manoch): R.2017320
 #    2017-03-12 IRIS DMC Product Team (Manoch): created (R.2017071)
 #
 # REFERENCES:
@@ -51,42 +53,54 @@
 # parameters to set initially
 #
 ################################################################################################
-version = "R.2017320"
+version = "R.2018191"
 
-################################################################################################
 #
-#  usage message
+# set paths
 #
-################################################################################################
+import os
+scriptDirectory = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+script = os.path.basename(__file__)
+paramPath = os.path.join(scriptDirectory, 'param')
+libPath = os.path.join(scriptDirectory, 'lib')
+
+import sys
+sys.path.append(paramPath)
+sys.path.append(libPath)
+
+import numpy as np
+import math
+import urllib
+import time
+import importlib
+
 #
+# import the HVSR parameters and libraries
+#
+import fileLib as fileLib
+import msgLib as msgLib
+
 def usage():
+   """usage message"""
    script = os.path.basename(__file__)
    import sys
    print("\n\nUSAGE(%s):\n"%(version))
    print(" ".join([script,"net=netName sta=staName loc=locCode chan=chanCode start=2007-03-19 end=2008-10-28 plot=[0,1] verbose=[0,1] percentlow=[10] percenthigh=[90] xtype=[period,frequency]"]))
    print("getStationChannelBaseline.py net=IU sta=ANMO loc=00 chan=BHZ start=2002-11-19 end=2008-11-13 plot=1 verbose=1 percentlow=10 percenthigh=90\n")
-   print("==================\n\n\n")
+   print("\n\n\n")
 
-################################################################################################
-#
-# get run arguments
-#
-################################################################################################
-#
+
 def getArgs(argList):
+   """get run arguments"""
    args = {}
    for i in range(1,len(argList)):
       key,value = argList[i].split('=')
       args[key] = value
    return args
 
-################################################################################################
-#
-# get a run argument for the given key
-#
-################################################################################################
-#
+
 def getParam(args,key,msgLib,value=None):
+   """get a run argument for the given key"""
    if key in args.keys():
       msgLib.info(': '.join([key,args[key]]))
       return args[key]
@@ -97,13 +111,9 @@ def getParam(args,key,msgLib,value=None):
       usage()
       sys.exit()
 
-################################################################################################
-#
-# add number of months (add) to a given/current date
-#
-################################################################################################
-#
+
 def addMonths(thisDate=None,add=1):
+   """add number of months (add) to a given/current date"""
    import datetime
    if thisDate is None:
       today = datetime.date.today()
@@ -125,13 +135,9 @@ def addMonths(thisDate=None,add=1):
       year  += 1
    return "%4d-%02d-01"%(year,month)
 
-################################################################################################
-#
-# check the PSD values to see if they are within the range
-#
-################################################################################################
-#
+
 def checkYRange(y,low,high):
+   """check the PSD values to see if they are within the range"""
    import operator
    OK = True
    l = list(map(operator.sub,y,low))
@@ -152,36 +158,11 @@ def checkYRange(y,low,high):
 ################################################################################################
 
 #
-# set paths
-#
-import os, sys
-scriptDirectory  = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-script           = os.path.basename(__file__)
-
-paramPath      = os.path.join(scriptDirectory, 'param')
-libPath        = os.path.join(scriptDirectory, 'lib')
-
-sys.path.append(paramPath)
-sys.path.append(libPath)
-
-import numpy as np
-import math
-import urllib
-import time
-import importlib
-
-#
-# import the HVSR parameters and libraries
-#
-import fileLib as fileLib
-import msgLib as msgLib
-
-#
 # set parameters
 #
-args          = getArgs(sys.argv)
+args = getArgs(sys.argv)
 paramFileName = script.replace('.py','') + '_param'
-print("\n\n\n==================")
+print("\n\n\n")
 msgLib.info(', '.join([script,paramFileName, version]))
 msgLib.info('Param Path: '+paramPath)
 
@@ -435,4 +416,4 @@ if doPlot > 0 and gotData:
    msgLib.info("Show")
    plt.show()
 
-print("==================\n\n\n")
+print("\n\n\n")
