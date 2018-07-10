@@ -25,19 +25,25 @@
         - Compute HVSR using one of the methods below (parameter: method=1|2|3|4|5|6).
         - Output a peak rank report with ranking based on SESAME 2004 (not avaiable for DFA method)
         - The HVSR computational methods supported:
+        
              (1) DFA, Diffuse Field Assumption method (Sánchez-Sesma et al., 2011)
+             
                  NOTE: The MUSTANG noise-psd web service Power Spectral Density estimate for seismic channels are computed using the algorithm outlined here 
                        (http://service.iris.edu/mustang/noise-psd/docs/1/help/). This algorithm involves averaging and normalization that may result in 
                        smoothing of some of the peaks that may otherwise be observed by direct computation of FFT and DFA. With this smoothing, the DFA 
                        results tend to be closer to the vector summation method, method (4) below.
-
-         ior HVSR computation by combining the two horizontal components using one of the methods referenced by Albarello and Lunedei (2013):
+                       
              (2) arithmetic mean, H ≡ (HN + HE)/2
+             
              (3) geometric mean, H ≡ √HN · HE
+             
              (4) vector summation, H ≡ √H2 N + H2 E 
+             
              (5) quadratic mean, H ≡ √(H2 N + H2 E )/2
+             
              (6) maximum horizontal value, H ≡ max {HN, HE}
 
+                  NOTE: combining the two horizontal components using one of the above methods is reviewed by Albarello and Lunedei (2013):
     CHANGES.txt
        - a text file containing the history of changes to this bundle
 
@@ -70,17 +76,19 @@
 USAGE:
    
    bin/computeStationChannelBaseline.py
+   
        Call the script and provide the run arguments. By defining a parameter on the command line, user overrides the values defined for that parameter in the parameter file. 
+       
        The call should have the form:
 
              getStationChannelBaseline.py net=netName sta=staName loc=locCode {chan=chanCode} start=2007-03-19 end=2008-10-28 {plot=[0,1] verbose=[0,1] percentlow=[10] percenthigh=[90] xtype=[period,frequency]}
          
-             Note:
-       
-             the default values for the parameters between {} may be provided in the parameter file
+             Note: the default values for the parameters between {} may be provided in the parameter file
  
    bin/computeHVSR.py
+   
        Call the script and provide the run arguments. By defining a parameter on the command line, user overrides the values defined for that parameter in the parameter file.
+       
        The call should have the form:
 
               network station location channel list     start date       end date  plot(1/0) plot      plot accepted     verbose    y-axis x-axis type     break start-end     remove PSDs that fall
@@ -91,9 +99,7 @@ USAGE:
                   |       |       |    |                |                 |             |       |         |        |         |         |       |              |                  |        |
    computeHVSR.py net=TA sta=TCOL loc= chan=BHZ,BHN,BHE start=2013-01-01 end=2013-01-01 plot=1 plotbad=0 plotpsd=0 plotpdf=1 verbose=1 ymax=5 xtype=frequency n=1 removeoutliers=1 method=4
 
-             Note:
-
-             any parameter given on the command line will override the one defined in the parameter file
+             Note: any parameter given on the command line will override the one defined in the parameter file
 
 
 EXAMPLES:
@@ -122,9 +128,12 @@ Project No. EVG1-CT-2000-00026 SESAME.
 ftp://ftp.geo.uib.no/pub/seismo/SOFTWARE/SESAME/USER-GUIDELINES/SESAME-HV-User-Guidelines.pdf
 
 
- HISTORY
+ HISTORY:
+ 
     - 2018-07-10: prerelease R.2018191
+    
     - 2017-11-28: computeHVSR R.2017332
+    
     - 2017-11-16: initial version R.2017320
  
  COMMENTS/QUESTIONS:
