@@ -6,8 +6,9 @@ import os, sys
 # computeHVSR.py configuration parameters
 #
 # HISTORY
+#  2018-07-10 IRIS DMC Product Team (Manoch): prerelease R.2018191
 #  2018-06-18 IRIS DMC Product Team (Manoch): added removeOutliers parameter to allow HVSR computation without removing outliers and added method parameter that indicates the method to use for combining h1 and h2
-#  2017-11-28 IRIS DMC Product Team (Manoch): public release R.2017332
+#  2017-11-28 IRIS DMC Product Team (Manoch): R.2017332
 #  2015-05-19 IRIS DMC Product Team (Manoch): created R.2017139
 #
 # NOTES
@@ -53,7 +54,7 @@ hvsrband   = [0.1,15]
 #
 # should we remove outliers?
 #
-removeOutliers = False
+removeoutliers = 1
 
 #
 # minimum peak amplitude to be considered
@@ -66,17 +67,16 @@ waterlevel = 1
 minrank = 2
 
 # H is computed based on the selected method for combining h1 and h2
-#     see: https://academic.oup.com/gji/article/194/2/936/597415
+#     see: https://academic.oup.com/gji/article/194/2/936/597415 FOR METHODS 2-6
 #     method:
-#        (2) arithmetic mean, that is, H ≡ (HN + HE)/2, considered by Chavez-Garcia et al. (2007),
-#        (3) geometric mean, that is, H ≡ √HN · HE, recommended by the SESAME project (2004) and also adopted by Picozzi et al. (2005),
-#                                Haghshenas et al. (2008), Pileggi et al. (2011),
-#        (4) vector summation, that is, H ≡ √H2 N + H2 E , used by Sauriau et al. (2007) and Puglia et al. (2011),
-#        (5) quadratic mean, that is, H ≡ √(H2 N + H2 E )/2, considered by Bonnefoy-Claudet et al. (2006, 2008) and Fah¨ et al. (2001),
-#        (6) maximum horizontal value, that is, H ≡ max {HN, HE}, used by Konno & Ohmachi (1998)
-methodList = ['','','arithmetic mean','geometric mean','vector summation','quadratic mean','maximum horizontal value','DFA']
+#        (1) Diffuse Field Assumption
+#        (2) arithmetic mean H = (HN + HE)/2 (the horizontal components are combined by using a simple mean)
+#        (3) geometric mean H = Sqrt(HN . HE) (mean horizontal spectra is derived by taking square-root of the product of the two horizontal components)
+#        (4) vector summation H = Sqrt(N^2 + E^2)
+#        (5) quadratic mean H = Sqrt((N^2 + E^2)/2.0)
+#        (6) maximum horizontal value H = Max(HN, HE)
+methodList = ['','Diffuse Field Assumption','arithmetic mean','geometric mean','vector summation','quadratic mean','maximum horizontal value']
 method = 4
-dfa    = 0 # use Diffuse Field Assumption (0=no, 1=yes)
 #
 # plot
 #
