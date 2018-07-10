@@ -94,15 +94,43 @@ USAGE:
        Call the script and provide the run arguments. By defining a parameter on the command line, user overrides the values defined for that parameter in the parameter file.
        
        The call should have the form:
-
-              network station location channel list     start date       end date  plot(1/0) plot      plot accepted     verbose    y-axis x-axis type     break start-end     remove PSDs that fall
-                  |       |       |    |                |                 |             | rejected     accepted    plot  output(1/0)  max      |           interval into "n"   outside the station 
-                  |       |       |    |                |                 |             |   PSDs(1/0)   PSDs(1/0)  PDFs(1/0) |         |       |              | segments       noise baseline
-                  |       |       |    |                |                 |             |       |         |        |         |         |       |              |                  |        
-                  |       |       |    |                |                 |             |       |         |        |         |         |       |              |                  |      compute H/V using method (see above) 
-                  |       |       |    |                |                 |             |       |         |        |         |         |       |              |                  |        |
+   
    computeHVSR.py net=TA sta=TCOL loc= chan=BHZ,BHN,BHE start=2013-01-01 end=2013-01-01 plot=1 plotbad=0 plotpsd=0 plotpdf=1 verbose=1 ymax=5 xtype=frequency n=1 removeoutliers=1 method=4
 
+net=nmetwork 
+
+sta=station 
+
+loc=location code 
+
+chan=channel code 
+
+start=start date 
+
+end=end date 
+
+plot=[0,1] 
+
+plotbad=plot 
+
+rejected PSDs
+
+plotpsd=plot PSDs 
+
+plotpdf=plotPDF 
+
+verbose=verbose mode 
+
+ymax=plot Y-axis maximum 
+
+xtype=x-axis type [frequency,period] 
+
+n=break Start-end interval Into "n" segments 
+
+removeoutliers=remove PSDs that fall outside the station noise baseline 
+
+method=HVSR computational method (see below) 
+   
              Note: any parameter given on the command line will override the one defined in the parameter file
 
 
