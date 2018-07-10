@@ -1,22 +1,30 @@
 bin/getStationChannelBaseline.py
-    2017-11-16 IRIS DMC Product Team (Manoch): public release (R.2017320)
-    2017-03-12 IRIS DMC Product Team (Manoch): created (R.2017071)
+    
+    2018-07-10 IRIS DMC Product Team (Manoch): prerelease R.2018191
+    2017-11-16 IRIS DMC Product Team (Manoch): R.2017320
+    2017-03-12 IRIS DMC Product Team (Manoch): R.2017071
 
-bon/computeHVSR.py
-    2017-11-28 IRIS DMC Product Team (Manoch): public release R.2017332
+bin/computeHVSR.py
+    2018-07-10 IRIS DMC Product Team (Manoch): prerelease R.2018191
+    2017-11-28 IRIS DMC Product Team (Manoch): R.2017332
     2017-05-21 IRIS DMC Product Team (Manoch): R.2017141
-    2017-03-12 IRIS DMC Product Team (Manoch): created R.2017071
+    2017-03-12 IRIS DMC Product Team (Manoch): R.2017071
 
 lib/fileLib.py
-    2015-05-19 IRIS DMC Product Team (Manoch): created (R.2015139)
+    2018-07-10 IRIS DMC Product Team (Manoch): prerelease R.2018191
+    2015-05-19 IRIS DMC Product Team (Manoch): R.2015139
 
 lib/msgLib.py
-    2015-05-19 IRIS DMC Product Team (Manoch): created (R.2015139)
+    2018-07-10 IRIS DMC Product Team (Manoch): prerelease R.2018191
+    2015-05-19 IRIS DMC Product Team (Manoch): R.2015139
 
 param/getStationChannelBaseline_param.py
-    2017-11-16 IRIS DMC Product Team (Manoch): public release (R.2017320)
-    2017-03-12 IRIS DMC Product Team (Manoch): created (R.2017071)
+    2018-07-10 IRIS DMC Product Team (Manoch): prerelease R.2018191
+    2017-11-16 IRIS DMC Product Team (Manoch): R.2017320
+    2017-03-12 IRIS DMC Product Team (Manoch): R.2017071
 
 param/computeHVSR_param.py
-   2017-11-28 IRIS DMC Product Team (Manoch): public release R.2017332
-   2015-05-19 IRIS DMC Product Team (Manoch): created R.2017139
+    2018-07-10 IRIS DMC Product Team (Manoch): prerelease R.2018191
+    2018-06-18 IRIS DMC Product Team (Manoch): added removeOutliers parameter to allow HVSR computation without removing outliers and added method parameter that indicates the method to use for combining h1 and h2
+    2017-11-28 IRIS DMC Product Team (Manoch): R.2017332
+    2015-05-19 IRIS DMC Product Team (Manoch): R.2017139
