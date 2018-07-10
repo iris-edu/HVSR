@@ -46,7 +46,8 @@
              
              (6) maximum horizontal value, H ≡ max {HN, HE}
 
-                  NOTE: combining the two horizontal components using one of the above methods is reviewed by Albarello and Lunedei (2013):
+                  NOTE: combining the two horizontal components using one of the above methods is reviewed by Albarello and Lunedei (2013).
+                  
     CHANGES.txt
        - a text file containing the history of changes to this bundle
 
