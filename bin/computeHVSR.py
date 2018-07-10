@@ -1,12 +1,12 @@
-#!/anaconda/3/bin/python
-# -*- coding: UTF-8 -*-
+#!/usr/bin/env python
+#
 #
 ################################################################################################
 #
 # NAME: computeHVSR.py - a Python script that uses IRIS DMC's MUSTANG noise-psd/pdf web services
 #       to compute horizontal-to-vertical spectral ratio (HVSR)
 #
-# Copyright (C) 2017  Product Team, IRIS Data Management Center
+# Copyright (C) 2018  Product Team, IRIS Data Management Center
 #
 #    This is a free software; you can redistribute it and/or modify
 #    it under the terms of the GNU Lesser General Public License as
@@ -36,21 +36,45 @@
 #    - SESAME 2004 parameters
 #
 # USAGE:
-#              network station location channel list     start date       end date  plot(1/0) plot      plot accepted     verbose    y-axis x-axis type     break start-end
-#                  |       |       |    |                |                 |             | rejected     accepted    plot  output(1/0)  max      |           interval into "n"
-#                  |       |       |    |                |                 |             |   PSDs(1/0)   PSDs(1/0)  PDFs(1/0) |         |       |              | segments
-#                  |       |       |    |                |                 |             |       |         |        |         |         |       |              |
-#   computeHVSR.py net=TA sta=TCOL loc= chan=BHZ,BHN,BHE start=2013-01-01 end=2013-01-01 plot=1 plotbad=0 plotpsd=0 plotpdf=1 verbose=1 ymax=5 xtype=frequency n=1
+#              network station location channel list     start date       end date  plot(1/0) plot      plot accepted     verbose    y-axis x-axis type     break start-end     remove PSDs that fall
+#                  |       |       |    |                |                 |             | rejected     accepted    plot  output(1/0)  max      |           interval into "n"   outside the station
+#                  |       |       |    |                |                 |             |   PSDs(1/0)   PSDs(1/0)  PDFs(1/0) |         |       |              | segments       noise baseline
+#                  |       |       |    |                |                 |             |       |         |        |         |         |       |              |                  |
+#                  |       |       |    |                |                 |             |       |         |        |         |         |       |              |                  |      compute H/V using method (see below)
+#                  |       |       |    |                |                 |             |       |         |        |         |         |       |              |                  |        |
+#   computeHVSR.py net=TA sta=TCOL loc= chan=BHZ,BHN,BHE start=2013-01-01 end=2013-01-01 plot=1 plotbad=0 plotpsd=0 plotpdf=1 verbose=1 ymax=5 xtype=frequency n=1 removeoutliers=1 method=4
+#
+#             (1) DFA, Diffuse Field Assumption method (Sánchez-Sesma et al., 2011)
+#                 NOTE: The MUSTANG noise-psd web service Power Spectral Density estimate for seismic channels are computed using the algorithm outlined here
+#                       (http://service.iris.edu/mustang/noise-psd/docs/1/help/). This algorithm involves averaging and normalization that may result in
+#                       smoothing of some of the peaks that may otherwise be observed by direct computation of FFT and DFA. With this smoothing the DFA
+#                       results tend to be closer to the vector summation method, method (4) below.
+#
+#             NOTE: methods 2-6 are referenced by Albarello and Lunedei (2013)
+#             (2) arithmetic mean, H ≡ (HN + HE)/2
+#             (3) geometric mean, H ≡ √HN · HE
+#             (4) vector summation, H ≡ √H2 N + H2 E
+#             (5) quadratic mean, H ≡ √(H2 N + H2 E )/2
+#             (6) maximum horizontal value, H ≡ max {HN, HE}
+#
 #
 # HISTORY:
 #
-version = "R.2017332"
+version = "R.2018191"
 #
-#    2017-11-28 IRIS DMC Product Team (Manoch): public release R.2017332
+#    2018-07-10 IRIS DMC Product Team (Manoch): prerelease version R.2018191
+#    2018-06-18 IRIS DMC Product Team (Manoch): added removeOutliers parameter to allow HVSR computation without removing outliers and added method parameter that 
+#                                               the method to use for combining h1 and h2, including DFA R.2018169
+#    2017-11-28 IRIS DMC Product Team (Manoch): R.2017332
 #    2017-05-21 IRIS DMC Product Team (Manoch): R.2017141
 #    2017-03-12 IRIS DMC Product Team (Manoch): created R.2017071
 #
 # REFERENCE:
+#   Albarello, Dario & Lunedei, Enrico. (2013). Combining horizontal ambient vibration components for H/V spectral ratio estimates. Geophysical Journal International. 194. 936-951. 10.1093/gji/ggt130.
+#   
+#   Francisco J Sánchez-Sesma, Francisco & Rodriguez, Miguel & Iturraran-Viveros, Ursula & Luzón, Francisco & Campillo, Michel & Margerin, Ludovic & García-Jerez, Antonio & Suarez, Martha & Santoyo, Miguel &
+#   Rodríguez-Castellanos, A. (2011). A theory for microtremor H/V spectral ratio: Application for a layered medium. Geophysical Journal International. 186. 221-225. 10.1111/j.1365-246X.2011.05064.x.
+#   
 #   Guidelines for the Implementation of the H/V Spectral Ratio Technique on Ambient Vibrations, December 2004
 #   SESAME European research project WP12 – Deliverable D23.12, European Commission – Research General Directorate
 #   Project No. EVG1-CT-2000-00026 SESAME.
@@ -61,38 +85,55 @@ version = "R.2017332"
 # parameters to set initially
 #
 ################################################################################################
-maxRank = 0
-greekChar = {'sigma':u"\u03C3",'epsilon':u"\u03B5",'teta':  u"\u03B8"}
 import operator
 import numpy as np
 import time
-t0 = time.time()
-channelOrder = {'Z':0,'1':1,'N':1,'2':2,'E':2}
 
-################################################################################################
-#
-#  usage message
-#
-################################################################################################
-#
+GREEK_CHAR = {'sigma':u"\u03C3",'epsilon':u"\u03B5",'teta':  u"\u03B8"}
+CHANNEL_ORDER = {'Z':0,'1':1,'N':1,'2':2,'E':2}
+SEPARATOR_CHAR = '='
+
+t0 = time.time()
+display = True
+maxRank = 0
+
+
 def usage():
+   """computeHVSR usage""" 
    print ("\n\nUSAGE("+version+"):\n\n")
-   print ("              network station location channel list     start date       end date  plot(1/0) plot      plot accepted     verbose    y-axis x-axis type     break start-end")
-   print ("                  |       |       |    |                |                 |             | rejected     accepted    plot  output(1/0)  max      |           interval into \"n\"")
-   print ("                  |       |       |    |                |                 |             |   PSDs(1/0)   PSDs(1/0)  PDFs(1/0) |         |       |              | segments")
-   print ("                  |       |       |    |                |                 |             |       |         |        |         |         |       |              |")
-   print ("   computeHVSR.py net=TA sta=TCOL loc= chan=BHZ,BHN,BHE start=2013-01-01 end=2013-01-01 plot=1 plotbad=0 plotpsd=0 plotpdf=1 verbose=1 ymax=5 xtype=frequency n=1")
-   print ("")
-   print ("any parameter given on the command line will override the one defined in the parameter file")
+
+   print ("              network station location channel list     start date       end date  plot(1/0) plot      plot accepted     verbose    y-axis x-axis type     break start-end     remove PSDs that fall")
+   print ("                  |       |       |    |                |                 |             | rejected     accepted    plot  output(1/0)  max      |           interval into 'n'   outside the station")
+   print ("                  |       |       |    |                |                 |             |   PSDs(1/0)   PSDs(1/0)  PDFs(1/0) |         |       |              | segments       noise baseline")
+   print ("                  |       |       |    |                |                 |             |       |         |        |         |         |       |              |                  |")
+   print ("                  |       |       |    |                |                 |             |       |         |        |         |         |       |              |                  |      compute H/V using method (see below)")
+   print ("                  |       |       |    |                |                 |             |       |         |        |         |         |       |              |                  |        |")
+   print ("   computeHVSR.py net=TA sta=TCOL loc= chan=BHZ,BHN,BHE start=2013-01-01 end=2013-01-01 plot=1 plotbad=0 plotpsd=0 plotpdf=1 verbose=1 ymax=5 xtype=frequency n=1 removeoutliers=1 method=4\n")
+   print ("       method:")
+   print ("             (1) DFA, Diffuse Field Assumption method (Sánchez-Sesma et al., 2011)")
+   print ("                 NOTE: The MUSTANG noise-psd web service Power Spectral Density estimate for seismic channels are computed using the algorithm outlined here")
+   print ("                       (http://service.iris.edu/mustang/noise-psd/docs/1/help/). This algorithm involves averaging and normalization that may result in")
+   print ("                       smoothing of some of the peaks that may otherwise be observed by direct computation of FFT and DFA. With this smoothing the DFA")
+   print ("                       results tend to be closer to the vector summation method, method (4) below.\n")
+   print ("             NOTE: methods 2-6 are referenced by Albarello and Lunedei (2013)")
+   print ("             (2) arithmetic mean, H ≡ (HN + HE)/2")
+   print ("             (3) geometric mean, H ≡ √HN · HE")
+   print ("             (4) vector summation, H ≡ √H2 N + H2 E")
+   print ("             (5) quadratic mean, H ≡ √(H2 N + H2 E )/2")
+   print ("             (6) maximum horizontal value, H ≡ max {HN, HE}\n\n")
+   print ("Albarello, Dario & Lunedei, Enrico. (2013). Combining horizontal ambient vibration components for H/V spectral ratio estimates. Geophysical Journal International. 194. 936-951. 10.1093/gji/ggt130.")
+   print ("Francisco J Sánchez-Sesma, Francisco & Rodriguez, Miguel & Iturraran-Viveros, Ursula & Luzón, Francisco & Campillo, Michel & Margerin, Ludovic & García-Jerez, Antonio & Suarez, Martha & Santoyo, Miguel &\n")
+   print ("Rodríguez-Castellanos, A. (2011). A theory for microtremor H/V spectral ratio: Application for a layered medium. Geophysical Journal International. 186. 221-225. 10.1111/j.1365-246X.2011.05064.x.\n")
+   print ("Guidelines for the Implementation of the H/V Spectral Ratio Technique on Ambient Vibrations, December 2004")
+   print ("SESAME European research project WP12 – Deliverable D23.12, European Commission – Research General Directorate")
+   print ("Project No. EVG1-CT-2000-00026 SESAME.")
+   print ("ftp://ftp.geo.uib.no/pub/seismo/SOFTWARE/SESAME/USER-GUIDELINES/SESAME-HV-User-Guidelines.pdf")
+ 
    print ("\n\n\n")
 
-################################################################################################
-#
-# timeIt - compute elapsed time since the last cal
-#
-################################################################################################
-#
+
 def timeIt(t0):
+   """compute elapsed time since the last call"""
    t1 = time.time()
    dt = t1 - t0
    t = t0
@@ -101,35 +142,34 @@ def timeIt(t0):
      t = t1
    return t
 
-################################################################################################
-#
-#  break an interval to date ranges
-#  this is used to avoid large requests that get rejected
-#
-################################################################################################
-#
+
 def dateRange(start, end, intv):
-    dateList = []
-    from datetime import datetime
-    start = datetime.strptime(start,"%Y-%m-%d")
-    end = datetime.strptime(end,"%Y-%m-%d")
-    diff = (end  - start ) / intv
-    for i in range(intv):
-        dateList.append((start + diff * i).strftime("%Y-%m-%d"))
-    dateList.append(end.strftime("%Y-%m-%d"))
+    """break an interval to date ranges
+    this is used to avoid large requests that get rejected
+    """
+    if intv <= 1:
+       dateList = [start,end]
+    else:
+       dateList = []
+       from datetime import datetime
+       startT = datetime.strptime(start,"%Y-%m-%d")
+       endT = datetime.strptime(end,"%Y-%m-%d")
+       diff = (endT  - startT ) / intv
+       if diff.days <= 1:
+           dateList = [start,end]
+       else:
+          for i in range(intv):
+              dateList.append((startT + diff * i).strftime("%Y-%m-%d"))
+          dateList.append(endT.strftime("%Y-%m-%d"))
     return dateList
 
-###############################################################################################
-#
-#  print a report of peak parameters
-#
-################################################################################################
-#
+
 def printPeakReport(stationHeader,reportHeader,peak,reportinfo,minRank):
+   """print a report of peak parameters"""
    index = []
    rank  = []
 
-   if reportinfo > 0:
+   if reportinfo:
       print("\n\nPeaks:")
       print("Parameters and ranking based on SESAME 2004 (A0: peak amplitude, f0: peak frequency):\n")
       print("- amplitude clarity conditions:")
@@ -138,8 +178,8 @@ def printPeakReport(stationHeader,reportHeader,peak,reportinfo,minRank):
       print("\t. A0 > 2\n")
       print("- amplitude stability conditions:")
       print("\t. peak appear within +/-5% on H/V curves of mean +/- one standard deviation (f0+/f0-)")
-      print("\t. "+greekChar['sigma']+"f lower than a frequency dependent threshold "+greekChar['epsilon']+"(f)")
-      print("\t. "+greekChar['sigma']+"A lower than a frequency dependent threshold log "+greekChar['teta']+"(f)\n")
+      print("\t. "+GREEK_CHAR['sigma']+"f lower than a frequency dependent threshold "+GREEK_CHAR['epsilon']+"(f)")
+      print("\t. "+GREEK_CHAR['sigma']+"A lower than a frequency dependent threshold log "+GREEK_CHAR['teta']+"(f)\n")
       #print("\n\n%s"%(reportHeader))
    for i in range(len(peak)):
       index.append(i)
@@ -147,11 +187,11 @@ def printPeakReport(stationHeader,reportHeader,peak,reportinfo,minRank):
    listTmp = list(zip(rank, index))   
    listTmp.sort(reverse=True)
 
-   if reportinfo > 0:
+   if reportinfo:
       print("\n%47s %10s %22s %12s %12s %32s %32s %27s %22s %17s"
-             %("Net.Sta.Loc.Chan","    f0    ","        A0 > 2        ","     f-      ","    f+     ","     f0- within ±5% of f0 &     ","     f0+ within ±5% of f0       ",greekChar['sigma']+"f < "+greekChar['epsilon']+" * f0      ",greekChar['sigma']+"logH/V < log"+greekChar['teta']+"    ","   Score/Max.    "))
+             %("Net.Sta.Loc.Chan","    f0    ","        A0 > 2        ","     f-      ","    f+     ","     f0- within ±5% of f0 &     ","     f0+ within ±5% of f0       ",GREEK_CHAR['sigma']+"f < "+GREEK_CHAR['epsilon']+" * f0      ",GREEK_CHAR['sigma']+"logH/V < log"+GREEK_CHAR['teta']+"    ","   Score/Max.    "))
       print("%47s %10s %22s %12s %12s %32s %32s %27s %22s %17s\n" 
-             %("================================================","==========","======================","============","============","================================","================================","===========================","======================","================="))
+             %(47 * SEPARATOR_CHAR,10 * SEPARATOR_CHAR,22 * SEPARATOR_CHAR,12 * SEPARATOR_CHAR, 12 * SEPARATOR_CHAR, 32 * SEPARATOR_CHAR,32 * SEPARATOR_CHAR,27 * SEPARATOR_CHAR,22 * SEPARATOR_CHAR,17 * SEPARATOR_CHAR))
 
    peakVisible = []
    for i in range(len(listTmp)):
@@ -165,26 +205,18 @@ def printPeakReport(stationHeader,reportHeader,peak,reportinfo,minRank):
    if len(listTmp) <= 0 or len(peakVisible) <= 0:
        print("%47s\n"%(stationHeader))
 
-################################################################################################
-#
-# get run arguments
-#
-################################################################################################
-#
+
 def getArgs(argList):
+   """get the run arguments"""
    args = {}
    for i in range(1,len(argList)):
       key,value = argList[i].split('=')
       args[key] = value
    return args
 
-################################################################################################
-#
-# get a run argument for the given key
-#
-################################################################################################
-#
+
 def getParam(args,key,msgLib,value,verbose=-1):
+   """get a run argument for the given key"""
    if key in args.keys():
       if verbose >= 0: 
          print (key,args[key])
@@ -196,13 +228,9 @@ def getParam(args,key,msgLib,value,verbose=-1):
       usage()
       sys.exit()
 
-################################################################################################
-#
-# check the PSD values to see if they are within the range
-#
-################################################################################################
-#
+
 def checkYRange(y,low,high):
+   """check the PSD values to see if they are within the range"""
    OK    = []
    NOTOK = []
    #
@@ -225,91 +253,97 @@ def checkYRange(y,low,high):
          
    return (OK,NOTOK)
 
-################################################################################################
-#
-# convert dB power to power
-#
-################################################################################################
-#
+
 def removeDb(dbValue):
-   value = float(dbValue/10.0)
-   return pow(10.0,value)
+   """convert dB power to power"""
+   values = []
+   for d in dbValue:
+      values.append(10**(float(d)/10.0))
+   return values
 
-################################################################################################
-#
-# calculate HVSR
-#
-# We will undo setp 6 of MUSTANG processing as outlined below:
-#    1. Dividing the window into 13 segments having 75% overlap
-#    2. For each segment:
-#       2.1 Removing the trend and mean
-#       2.2 Apply a 10% sine taper
-#       2.3 FFT
-#    3. Calculate the normalized PSD
-#    4. Average the 13 PSDs & scale to compensate for tapering
-#    5. Frequency-smooth the averaged PSD over 1-octave intervals at 1/8-octave increments
-#    6. Convert power to decibels
-#
-################################################################################################
-#
-def getHvsr(dBz,dB1,dB2):
-   from scipy.stats import gmean 
-   #
-   # First convert dB to m/s**2 (the /Hz portion is not necessary since it will cancel out when 
-   #       calculating ratios)
-   #
-   pz = math.sqrt(removeDb(float(dBz)))
-   p1 = math.sqrt(removeDb(float(dB1)))
-   p2 = math.sqrt(removeDb(float(dB2)))
 
-   #
-   # H mean - mean of horizontal power here we use geometric mean of power that translates to 
-   #          RMS of amplitude (we could also have used arithmetic  mean)
-   #
-   h = gmean([p1,p2])
-   #h = math.sqrt((p1*p1+p2*p2)/2.0)
-   hvsr  = float(h/pz)
+def getPower(dB,x):
+   """calculate HVSR
+      We will undo setp 6 of MUSTANG processing as outlined below:
+          1. Dividing the window into 13 segments having 75% overlap
+          2. For each segment:
+             2.1 Removing the trend and mean
+             2.2 Apply a 10% sine taper
+             2.3 FFT
+          3. Calculate the normalized PSD
+          4. Average the 13 PSDs & scale to compensate for tapering
+          5. Frequency-smooth the averaged PSD over 1-octave intervals at 1/8-octave increments
+          6. Convert power to decibels
+
+    NOTE: PSD is equal to the power divided by the width of the bin
+          PSD = P / W
+          log(PSD) = Log(P) - log(W)
+          log(P)   = log(PSD) + log(W)  here W is width in frequency
+          log(P)   = log(PSD) - log(Wt) here Wt is width in period
+   
+    for each bin perform rectangular integration to compute power
+    power is assigned to the point at the begining of the interval
+         _   _
+        | |_| |
+        |_|_|_|
+   
+    Here we are computing power for individual ponts, so, no integration is necessary, just
+    compute area
+   """     
+   import numpy as np
+   dx = np.diff(x)[0]
+   p  = np.multiply(np.mean(removeDb(dB)) , dx)
+   return p
+
+def getHvsr(dBz,dB1,dB2,x,method=4):
+   """
+   H is computed based on the selected method see: https://academic.oup.com/gji/article/194/2/936/597415
+       method:
+          (1) DFA
+          (2) arithmetic mean, that is, H ≡ (HN + HE)/2
+          (3) geometric mean, that is, H ≡ √HN · HE, recommended by the SESAME project (2004)
+          (4) vector summation, that is, H ≡ √H2 N + H2 E 
+          (5) quadratic mean, that is, H ≡ √(H2 N + H2 E )/2
+          (6) maximum horizontal value, that is, H ≡ max {HN, HE}
+   """
+   pz = getPower(dBz,x)
+   p1 = getPower(dB1,x)
+   p2 = getPower(dB2,x)
+
+   hz = math.sqrt(pz)
+   h1 = math.sqrt(p1)
+   h2 = math.sqrt(p2)
+
+   h  ={2:(h1+h2)/2.0, 3:math.sqrt(h1 * h2), 4:math.sqrt(p1 + p2), 5: math.sqrt((p1 + p2)/2.0), 6: max(h1,h2)}
+
+   hvsr = h[method]/hz
    return hvsr
 
-################################################################################################
-#
-# find peaks
-#
-################################################################################################
-#
-def findPeaks(Y):
 
-   # 
-   # find the peaks
-   #
+def findPeaks(Y):
+   """find peaks"""
    from scipy.signal import argrelextrema
    indexList = argrelextrema(np.array(Y), np.greater)
 
    return indexList[0]
 
-################################################################################################
-#
-# initialize peaks
-#
-################################################################################################
-#
+
 def initPeaks(X,Y,indexList,hvsrBand,peakWaterLevel):
+   """initialize peaks"""
    peak    = []
    for i in indexList:
       if Y[i] > peakWaterLevel[i] and (X[i] >= hvsrBand[0] and X[i] <= hvsrBand[1]):
          peak.append({'f0':float(X[i]),'A0':float(Y[i]),'f-':None,'f+':None,'Sf':None,'Sa':None,'Score':0,'Report':{'A0':'','Sf':'','Sa':'','P+':'','P-':''}})
    return peak
 
-################################################################################################
-#
-# test peaks for satisfying amplitude clarity conditions as outlined by SESAME 2004:
-#     - there exist one frequency f-, lying between f0/4 and f0, such that A0 / A(f-) > 2
-#     - there exist one frequency f+, lying between f0 and 4*f0, such that A0 / A(f+) > 2
-#     - A0 > 2
-#
-################################################################################################
-#
+
 def checkClarity(X,Y,peak,rank=False):
+   """
+      test peaks for satisfying amplitude clarity conditions as outlined by SESAME 2004:
+          - there exist one frequency f-, lying between f0/4 and f0, such that A0 / A(f-) > 2
+          - there exist one frequency f+, lying between f0 and 4*f0, such that A0 / A(f+) > 2
+          - A0 > 2
+   """
    global maxRank
 
    # 
@@ -345,7 +379,7 @@ def checkClarity(X,Y,peak,rank=False):
       maxRank += 1
    for i in range(len(peak)):
       peak[i]['f+'] = '-'
-      for j in range(len(X)):
+      for j in range(len(X)-1):
          #
          # there exist one frequency f+, lying between f0 and 4*f0, such that A0 / A(f+) > 2
          #
@@ -356,15 +390,13 @@ def checkClarity(X,Y,peak,rank=False):
          
    return peak
    
-###############################################################################################
-#
-# test peaks for satisfying stability conditions as outlined by SESAME 2004:
-#     - the peak should appear at the same frequency (within a percentage ± 5%) on the H/V
-#       curves corresponding to mean + and – one standard deviation.
-#
-################################################################################################
-#
+
 def checkFreqStability(peak,peakm,peakp):
+   """
+      test peaks for satisfying stability conditions as outlined by SESAME 2004:
+          - the peak should appear at the same frequency (within a percentage ± 5%) on the H/V
+            curves corresponding to mean + and – one standard deviation.
+   """
    global maxRank
 
    # 
@@ -410,15 +442,13 @@ def checkFreqStability(peak,peakm,peakp):
    return peak
 
 
-###############################################################################################
-#
-# test peaks for satisfying stability conditions as outlined by SESAME 2004:
-#     - σf lower than a frequency dependent threshold ε(f)
-#     - σA (f0) lower than a frequency dependent threshold θ(f),
-#
-################################################################################################
-#
 def checkStability(stdf,peak,hvsrlogstd=False,rank=False):
+   """
+   test peaks for satisfying stability conditions as outlined by SESAME 2004:
+      - σf lower than a frequency dependent threshold ε(f)
+      - σA (f0) lower than a frequency dependent threshold θ(f),
+   """
+
    global maxRank
 
    # 
@@ -506,14 +536,9 @@ def checkStability(stdf,peak,hvsrlogstd=False,rank=False):
             peak[i]['Report']['Sa'] = "%10.4f < %0.2f  "%(hvsrlogstd[i],t)
    return peak         
 
-###############################################################################################
-#
-# get PDF
-#
-################################################################################################
-#
-def getPDF(URL,verbose):
 
+def getPDF(URL,verbose):
+   """get PDF"""
    xValues = []
    yValues = []
    X       = []
@@ -620,11 +645,20 @@ plotRows = 4
 # set parameters
 #
 args = getArgs(sys.argv)
+if len(args) <= 1:
+   usage()
+   sys.exit()
+
 verbose = int(getParam(args,'verbose',msgLib,param.verbose))
 if verbose >= 0:
-   print ("\n",sys.argv[0], version)
+   print ("\n[INFO]",sys.argv[0], version)
 
 reportinfo  = int(getParam(args,'reportinfo',msgLib,1,verbose))
+
+# 
+# get channels and sort tem
+# the reverse sort order makes sure that we always have ?HZ first. Order of horizontals is not important
+#
 channels    = getParam(args,'chan',msgLib,param.chan)
 channelList = sorted(channels.split(','),reverse=True)
 if len(channelList) < 3:
@@ -632,18 +666,29 @@ if len(channelList) < 3:
    sys.exit()
 sortedChannelList = channelList.copy()
 for channel in channelList:
-   sortedChannelList[channelOrder[channel[2]]] = channel
+   sortedChannelList[CHANNEL_ORDER[channel[2]]] = channel
 
-minRank     = float(getParam(args,'minrank',msgLib,param.minrank))
-network     = getParam(args,'net',msgLib,None)
+#
+# this will tell the script if we want to reject suspect PSDs
+#
+removeOutliers = bool(int(getParam(args,'removeoutliers',msgLib,False)))
+
+print("[INFO] removeOutliers:",removeOutliers)
+
+#
+# minimum SESAME 2004 rank to be accepted
+#
+minrank = 2
+minRank        = float(getParam(args,'minrank',msgLib,param.minrank))
+network        = getParam(args,'net',msgLib,None)
 if network is None:
    msgLib.error('network not defined!',1)
    sys.exit()
-station     = getParam(args,'sta',msgLib,None)
+station        = getParam(args,'sta',msgLib,None)
 if station is None:
    msgLib.error('station not defined!',1)
    sys.exit()
-location    = getParam(args,'loc',msgLib,None)
+location       = getParam(args,'loc',msgLib,None)
 if location is None:
    msgLib.error('location not defined!',1)
    sys.exit()
@@ -654,8 +699,27 @@ startTime       = time.strptime(start, "%Y-%m-%d")
 end             = getParam(args,'end',msgLib,None)
 endHour         = "T00:00:00"
 endTime         = time.strptime(end, "%Y-%m-%d")
-n               = int(getParam(args,'n',msgLib,5))
+
+#
+# break the start-end interval to n segments
+#
+n               = int(getParam(args,'n',msgLib,1))
 dateList        = dateRange(start,end,n)
+print("[INFO] DATE LIST:",dateList)
+
+#
+# how to combine h1 & h2
+#
+method          = int(getParam(args,'method',msgLib,param.method))
+if method <= 0 or method > 6:
+   msgLib.error('method '+str(method)+' for combining H1 & H2 is invalid!',1)
+   sys.exit()
+elif method == 1:
+   dfa = 1
+else:
+   dfa = 0
+
+print("[INFO] Using",param.methodList[method])
 doPlot          = int(getParam(args,'plot',msgLib,param.plot))
 plotPSD         = int(getParam(args,'plotpsd',msgLib,param.plotpsd))
 plotPDF         = int(getParam(args,'plotpdf',msgLib,param.plotpdf))
@@ -681,14 +745,13 @@ reportHeader   += '\n\n'
 import matplotlib
 if doPlot <= 0:
    if verbose >= 0:
-      print ("PLOT OFF")
+      print ("[INFO] PLOT OFF")
    matplotlib.use('agg')
 else:
    from obspy.imaging.cm import pqlx
 
 #
 # one channel at a time
-# the reverse sort order makes sure that we always have ?HZ first. Order of horizontals is not important
 #
 channelIndex = -1
 for channel in sortedChannelList:
@@ -696,54 +759,57 @@ for channel in sortedChannelList:
    xValues       = []
    psdValues     = []
    dayValues     = []
+   dayTimeValues = []
    pctLow        = []
    pctHigh       = []
    pctMid        = []
 
-   target        = '.'.join([network,station,location,channel,"M"])
+   target        = '.'.join([network,station,location,channel,"*"])
    label         = '.'.join([network,station,location,'PSDs'])
    labelHVSR     = '.'.join([network,station,location,'HVSR'])
    if verbose >= 0 :
       msgLib.info("requesting "+target+" from "+start+" to "+end)
 
    #
-   # baseline files are required
+   # baseline files are required if we will remove the outliers
    # we assume the baseline file has all the periods, so we use it as a reference
    #
-   try:
-      baselineFile = open(os.path.join(param.baselineDirectory,fileLib.baselineFileName(network,station,location,channel)),'r')
-   except:
-      msgLib.error("failed to read baseline file "+os.path.join(param.baselineDirectory,fileLib.baselineFileName(network,station,location,channel)),1)
-      sys.exit()
+   if removeOutliers:
+      try:
+         baselineFile = open(os.path.join(param.baselineDirectory,fileLib.baselineFileName(network,station,location,channel)),'r')
+      except:
+         msgLib.error("failed to read baseline file "+os.path.join(param.baselineDirectory,fileLib.baselineFileName(network,station,location,channel)),1)
+         sys.exit()
 
-   lines = baselineFile.read()
-   baseline = lines.split('\n')
-   for indexValue in range(0,len(baseline)):
-      if len(baseline[indexValue].strip()) == 0:
-         continue
-      if baseline[indexValue].strip()[0] == '#':
-         values = baseline[indexValue].strip().split()
-         percentLow  = values[1]
-         percentMid  = values[3]
-         percentHigh = values[5]
-         continue
+      lines = baselineFile.read()
+      baseline = lines.split('\n')
+      for indexValue in range(0,len(baseline)):
+         if len(baseline[indexValue].strip()) == 0:
+            continue
+         if baseline[indexValue].strip().startswith('#'):
+            values = baseline[indexValue].strip().split()
+            percentLow  = values[1]
+            percentMid  = values[3]
+            percentHigh = values[5]
+            continue
 
-      values = baseline[indexValue].split()
+         values = baseline[indexValue].split()
      
-      xValues.append(float(values[0]))
-      pctLow.append(float(values[1]))
-      pctMid.append(float(values[2]))
-      pctHigh.append(float(values[3]))
-   baselineFile.close()
+         xValues.append(float(values[0]))
+         pctLow.append(float(values[1]))
+         pctMid.append(float(values[2]))
+         pctHigh.append(float(values[3]))
+      baselineFile.close()
 
    #
    # get daily PSDs from MUSTANG
-   #    Limit PSD segments starting between starttime (inclusive) and endtime (exclusive)
+   # Limit PSD segments starting between starttime (inclusive) and endtime (exclusive)
    # 
    pdfX = []
    pdfY = []
    pdfP = []
    for dateIndex in range(len(dateList)-1):
+      print("[INFO] doing ",dateList[dateIndex]+startHour,'to',dateList[dateIndex+1]+endHour)
       URL = param.mustangPsdUrl+'target='+target+'&starttime='+dateList[dateIndex]+startHour+'&endtime='+dateList[dateIndex+1]+endHour+'&format=xml&correct=true'
       if verbose >= 0:
          msgLib.info('requesting:'+URL)
@@ -760,14 +826,14 @@ for channel in sortedChannelList:
             msgLib.error("failed on target "+target+" "+URL,1)
          continue
 
-      if verbose > 0:
+      if verbose:
          msgLib.info("PSD waiting for reply....")
 
       tree = ET.parse(link)
       link.close()
       root = tree.getroot()
 
-      if verbose > 0:
+      if verbose:
          msgLib.info(root.tag)
          requestStart = root.find('RequestedDateRange').find('Start').text
          requestEnd   = root.find('RequestedDateRange').find('End').text
@@ -775,7 +841,7 @@ for channel in sortedChannelList:
       psds = root.find('Psds')
 
       allPsds = psds.findall('Psd')
-      if verbose > 0:
+      if verbose:
          msgLib.info("PSD: "+str(len(allPsds)))
          t0 = timeIt(t0)
 
@@ -795,23 +861,33 @@ for channel in sortedChannelList:
             Y.append(float(value.attrib['power']))
 
          #
-         # check our previous assumption about samples, the X values must match xValues, above
+         # we follow a simple logic, the X values must match. We take the first one to be the sequence we want
          #
+         if not xValues:
+            xValues = list(X)
+
          if X != xValues:
-            if verbose > 0:
+            if verbose:
                msgLib.warning(sys.argv[0]," ".join(["rejected",target,dateList[dateIndex],dateList[dateIndex+1],"for bad X"]))
          else:
+            #
+            # store the PSD values and at the same time keep track of their day and time
+            #
             dayValues.append(day)
+            dayTimeValues.append(psd.attrib['start'])
             psdValues.append(Y)
 
-      if plotPDF > 0:
+      if plotPDF:
          (thisX,thisY,thisP) = getPDF(param.mustangPdfUrl+'target='+target+'&starttime='+dateList[dateIndex]+'&endtime='+dateList[dateIndex+1]+'&format=text',verbose)
          pdfX += thisX
          pdfY += thisY
          pdfP += thisP
-         if verbose > 0:
+         if verbose:
             msgLib.info("PDF: "+str(len(pdfY)))
-   if len(psdValues) <= 0:
+   #
+   # must have PSDs
+   #
+   if not psdValues:
       if verbose >= 0:
          msgLib.error(" ".join(["no PSDs found",dateList[dateIndex],dateList[dateIndex+1]]),1)
       sys.exit()
@@ -822,11 +898,15 @@ for channel in sortedChannelList:
 
    #
    # work on PSDs
+   # 
+
+   #
+   # initial settings
    #
    if channelIndex == 0:
-      if doPlot > 0:
+      if doPlot:
          if verbose >= 0:
-            msgLib.info("PLOT PSD")
+            msgLib.info("[INFO] PLOT PSD")
          import matplotlib.pyplot as plt
          from matplotlib.offsetbox import AnchoredText
          fig = plt.figure(figsize=(param.imageSize),facecolor="white")
@@ -834,55 +914,88 @@ for channel in sortedChannelList:
          fig.canvas.set_window_title(label)
          ax.append(plt.subplot(plotRows,1,channelIndex+1))
 
-      dailyPSD       = [{},{},{}]
-      medianDailyPSD = [{},{},{}]
+      #
+      # [chanZ[day],chan1[day],chan2[day]]
+      #
+      dailyPSD          = [{},{},{}]
+      dayTimePSD        = [{},{},{}]
+      medianDailyPSD    = [{},{},{}]
+      equalDailyEnergy  = [{},{},{}]
    else:
-      if doPlot > 0:
+      if doPlot:
          ax.append(plt.subplot(plotRows,1,channelIndex+1, sharex=ax[0]))
 
    #
    # go through all PSDs and reject the "bad" ones based on the station baseline
+   # only done when removeOutliers is True
    #
-   if verbose > 0:
-      msgLib.info("CLEAN UP "+str(len(psdValues))+" PSDs")
-   (ok,notok) = checkYRange(psdValues,pctLow,pctHigh)
-   reportHeader += ' '.join(['Channel',channel,str(len(psdValues)),"PSDs,",str(len(ok)),'accepted and',str(len(notok)),'rejected','\n'])
-   if verbose > 0:
+   if removeOutliers:
+      if verbose:
+         msgLib.info("CLEAN UP "+str(len(psdValues))+" PSDs")
+      (ok,notok) = checkYRange(psdValues,pctLow,pctHigh)
+   else:
+      #
+      # no cleanup needed, mark them all as OK
+      #
+      notok = []
+      ok    = range(len(psdValues))
+
+   info          = ' '.join(['Channel',channel,str(len(psdValues)),"PSDs,",str(len(ok)),'accepted and',str(len(notok)),'rejected','\n'])
+   reportHeader += info
+   print ("[INFO]:",info)
+   
+   if verbose and notok:
       t0 = timeIt(t0)
       msgLib.info("FLAG BAD PSDs")
    for i in range(len(ok)):
-         index = ok[i]
-         day   = dayValues[index]
-         psd   = psdValues[index]
+         index   = ok[i]
+         # DAY,DAYTIME: 2018-01-01 2018-01-01T00:00:00.000Z
+         day     = dayValues[index]
+         dayTime = dayTimeValues[index]
+         psd     = psdValues[index]
+   
+         #
+         # preserve the individual PSDs (dayTime)
+         #
+         dayTimePSD[channelIndex][dayTime] = psd
+
+         #
+         # group PSDs into daily bins
+         #
          if day not in dailyPSD[channelIndex].keys():
             dailyPSD[channelIndex][day] = []
          dailyPSD[channelIndex][day].append(psd)
+
+         #
+         # keep track of individual days
+         #
          if dayValues[index] not in dayValuesPassed[channelIndex]:
             dayValuesPassed[channelIndex].append(day)
-   if verbose > 0:
+   if verbose and notok:
       t0 = timeIt(t0)
+
    #
    # plot the "bad" PSDs in gray
    #
-   if doPlot > 0:
-      if plotBad > 0:
-         msgLib.info("PLOT BAD PSDs")
+   if doPlot:
+      if plotBad:
+         msgLib.info("[INFO] PLOT BAD PSDs")
          for i in range(len(notok)):
             plt.semilogx(np.array(xValues), psdValues[notok[i]], c='gray')
          if verbose >= 0:
             t0 = timeIt(t0)
 
-      if plotPSD > 0:
+      if plotPSD:
          #
          # plot the "good" PSDs in green
          #
-         if verbose > 0:
-            msgLib.info("PLOT GOOD PSDs")
+         if verbose:
+            msgLib.info("[INFO] PLOT GOOD PSDs")
          for i in range(len(ok)):
             plt.semilogx(np.array(xValues), psdValues[ok[i]], c='green')
          if verbose >= 0:
             t0 = timeIt(t0)
-      elif plotPDF > 0:
+      elif plotPDF:
          # define the colormap
          #cmap = plt.cm.jet
          # extract all colors from the .jet map
@@ -897,13 +1010,14 @@ for channel in sortedChannelList:
          im = plt.scatter(pdfX,pdfY,c=pdfP, s=46.5, marker = '_',  linewidth=param.lw, edgecolor='face', cmap=cmap, alpha=param.alpha)
          ax[channelIndex].set_xscale('log')
 
-      if verbose > 0:
-         msgLib.info("TUNE PLOTS")
+      if verbose:
+         msgLib.info("[INFO] TUNE PLOTS")
       if verbose >= 0:
          t0 = timeIt(t0)
-      plt.semilogx(np.array(xValues),pctHigh,c='yellow',label=str(percentHigh)+'%')
-      plt.semilogx(np.array(xValues),pctMid,c='red',label=str(percentMid)+'%')
-      plt.semilogx(np.array(xValues),pctLow,c='orange',label=str(percentLow)+'%')
+      if removeOutliers:
+         plt.semilogx(np.array(xValues),pctHigh,c='yellow',label=str(percentHigh)+'%')
+         plt.semilogx(np.array(xValues),pctMid,c='red',label=str(percentMid)+'%')
+         plt.semilogx(np.array(xValues),pctLow,c='orange',label=str(percentLow)+'%')
       plt.semilogx((param.hvsrXlim[0],param.hvsrXlim[0]),param.yLim,c='black')
       plt.semilogx((param.hvsrXlim[1],param.hvsrXlim[1]),param.yLim,c='black')
       p1 = plt.axvspan(param.xLim[xtype][0], param.hvsrXlim[0], facecolor='#909090', alpha=0.5)
@@ -920,7 +1034,7 @@ for channel in sortedChannelList:
       ax[channelIndex].add_artist(anchored_text)
 
       # create a second axes for the colorbar
-      if plotPDF > 0:
+      if plotPDF:
          ax2 = fig.add_axes([0.92, 0.1, 0.01, 0.8])
          fig.colorbar(im, ax2, orientation='vertical')
          ax2.set_ylabel('Probability (%)', size=9, rotation=270, labelpad=7)
@@ -928,17 +1042,117 @@ for channel in sortedChannelList:
 
    #
    # compute and save the median daily PSD for HVSR computation
+   # for non-DFA computation
    #
-   if verbose > 0:
-      msgLib.info("SAVE MEDIAN DAILY")
-   for day in (dayValuesPassed[channelIndex]):#dailyPSD[channelIndex].keys()):
-       #medianDailyPSD[channelIndex][day] = np.percentile(list(zip(*dailyPSD[channelIndex][day])),50,axis=1)
-       medianDailyPSD[channelIndex][day] = np.percentile(dailyPSD[channelIndex][day],50,axis=0)
+   if not dfa:
+      if verbose:
+         msgLib.info("SAVE MEDIAN DAILY")
+      for day in (dayValuesPassed[channelIndex]):
+          if display:
+             print("[INFO] calculating medianDailyPSD")
+             display = False 
+          medianDailyPSD[channelIndex][day] = np.percentile(dailyPSD[channelIndex][day],50,axis=0)
+
+#
+# are we doing DFA?
+# use equal energy for daily PSDs to give small "events" a chance to contribute 
+# the same as large ones, so that P1+P2+P3=1
+#
+if dfa:
+   if display:
+      print("[INFO] DFA")
+      display = False
+   sumNSPower = []
+   sumEWPower = []
+   sumZPower  = []
+   dailyPSD   = [{},{},{}]
+   dayValues  = []
+
+   #
+   # make sure we have all 3 components for every time sample
+   #
+   for dayTime in(dayTimeValues):
+      if dayTime not in (dayTimePSD[0].keys()) or dayTime not in (dayTimePSD[1].keys()) or dayTime not in (dayTimePSD[2].keys()):
+         continue
+      day = dayTime.split('T')[0]
+      if day not in dayValues:
+         dayValues.append(day)
+
+      #
+      # initialize the daily PSDs
+      #
+      if day not in dailyPSD[0].keys():
+         dailyPSD[0][day] = []
+         dailyPSD[1][day] = []
+         dailyPSD[2][day] = []
+
+      dailyPSD[0][day].append(dayTimePSD[0][dayTime])
+      dailyPSD[1][day].append(dayTimePSD[1][dayTime])
+      dailyPSD[2][day].append(dayTimePSD[2][dayTime])
+
+   #
+   # for each day equalize energy
+   #
+   for day in dayValues:
+
+      #
+      # each PSD for the day
+      #
+      for i in range(len(dailyPSD[0][day])):
+         Pz    = []
+         P1    = []
+         P2    = []
+         sumPz = 0
+         sumP1 = 0
+         sumP2 = 0
+
+         #
+         # each sample of the PSD , convert to power
+         #
+         for j in range(len(xValues)-1):
+            pz     = getPower([dailyPSD[0][day][i][j],dailyPSD[0][day][i][j+1]],[xValues[j],xValues[j+1]])
+            Pz.append(pz)
+            sumPz += pz
+            p1     = getPower([dailyPSD[1][day][i][j],dailyPSD[1][day][i][j+1]],[xValues[j],xValues[j+1]])
+            P1.append(p1)
+            sumP1 += p1
+            p2     = getPower([dailyPSD[2][day][i][j],dailyPSD[2][day][i][j+1]],[xValues[j],xValues[j+1]])
+            P2.append(p2)
+            sumP2 += p2
+
+         sumPower = sumPz + sumP1 + sumP2 # total power
+
+         #
+         # normalized power
+         #
+         for j in range(len(xValues)-1):
+            #
+            # initialize if this is the first sample of the day
+            #
+            if i == 0:
+               sumZPower.append(Pz[j] / sumPower)
+               sumNSPower.append(P1[j] / sumPower)
+               sumEWPower.append(P2[j] / sumPower)
+            else:
+               sumZPower[j]  += (Pz[j] / sumPower)
+               sumNSPower[j] += (P1[j] / sumPower)
+               sumEWPower[j] += (P2[j] / sumPower)
+      #
+      # average the normalized daily power
+      #
+      for j in range(len(xValues)-1):
+         sumZPower[j]  /= len(dailyPSD[0][day])
+         sumNSPower[j] /= len(dailyPSD[0][day])
+         sumEWPower[j] /= len(dailyPSD[0][day])
+
+      equalDailyEnergy[0][day] = sumZPower.copy()
+      equalDailyEnergy[1][day] = sumNSPower.copy()
+      equalDailyEnergy[2][day] = sumEWPower.copy()
 
 #
 # HVSR computation
 #
-if verbose > 0:
+if verbose:
    msgLib.info("HVSR computation")
 if verbose >= 0:
    t0 = timeIt(t0)
@@ -962,14 +1176,20 @@ peakWaterLevelm = []
 hvsrm2          = []
 hvsrstd         = []
 hvsrlogstd      = []
-outFile         = open (os.path.join (param.hvsrDirectory, fileLib.hvsrFileName(network,station,location,start,end)), "w")
+
+path   = "".join(["M",str(method)])
+fileLib.mkdir(param.hvsrDirectory,path)
+outFileName = os.path.join (param.hvsrDirectory,path, fileLib.hvsrFileName(network,station,location,start,end))
+
+outFile         = open (outFileName,"w")
+print("OUT FILE:",outFileName)
 count           = -1
 
 #
 # compute one x-value (period or frequency) at a time to also compute standard deviation
 #
 outFile.write("frequency HVSR HVSR+1STD HVSR-1STD\n")
-for j in range(len(xValues)):
+for j in range(len(xValues)-1):
    missing = 0
    hvsrTmp = []
 
@@ -977,15 +1197,27 @@ for j in range(len(xValues)):
       #
       # must have all 3 channels, compute HVSR for that day
       #
-      if day in medianDailyPSD[0].keys() and day in medianDailyPSD[1].keys() and day in medianDailyPSD[2].keys():
-         hvsr0 = getHvsr(medianDailyPSD[0][day][j],medianDailyPSD[1][day][j],medianDailyPSD[2][day][j])
-         hvsrTmp.append(hvsr0)
+      if dfa:
+         if day in equalDailyEnergy[0].keys() and day in equalDailyEnergy[1].keys() and day in equalDailyEnergy[2].keys():
+            hvsr0 = math.sqrt((equalDailyEnergy[1][day][j] + equalDailyEnergy[2][day][j]) / equalDailyEnergy[0][day][j])
+            hvsrTmp.append(hvsr0)
+         else:
+            if verbose > 0:
+               msgLib.warning(sys.argv[0], day+" missing component, skipped!")
+            missing += 1
+            continue
       else:
-         missing += 1
-         if verbose > 0:
-            msgLib.warning(sys.argv[0], day+" missing component, skipped!")
-         continue
-
+         if day in medianDailyPSD[0].keys() and day in medianDailyPSD[1].keys() and day in medianDailyPSD[2].keys():
+            PSD0  = [medianDailyPSD[0][day][j],medianDailyPSD[0][day][j+1]]
+            PSD1  = [medianDailyPSD[1][day][j],medianDailyPSD[1][day][j+1]]
+            PSD2  = [medianDailyPSD[2][day][j],medianDailyPSD[2][day][j+1]]
+            hvsr0 = getHvsr(PSD0,PSD1,PSD2,[xValues[j],xValues[j+1]],method=method)
+            hvsrTmp.append(hvsr0)
+         else:
+            if verbose > 0:
+               msgLib.warning(sys.argv[0], day+" missing component, skipped!")
+            missing += 1
+            continue
    count +=1
    peakWaterLevel.append(waterLevel)
    if len(hvsrTmp) > 0:
@@ -1010,15 +1242,28 @@ hvsrPeaks   = [] # this holds the peaks for individual HVSRs that will contribut
 
 for day in sorted(dayValuesPassed):
    hvsrTmp = []
-   for j in range(len(xValues)):
-      if day in medianDailyPSD[0].keys() and day in medianDailyPSD[1].keys() and day in medianDailyPSD[2].keys():
-         hvsr0 = getHvsr(medianDailyPSD[0][day][j],medianDailyPSD[1][day][j],medianDailyPSD[2][day][j])
-         hvsrTmp.append(hvsr0)
+   for j in range(len(xValues)-1):
+      if dfa > 0:
+         if day in equalDailyEnergy[0].keys() and day in equalDailyEnergy[1].keys() and day in equalDailyEnergy[2].keys():
+            hvsr0 = math.sqrt((equalDailyEnergy[1][day][j] + equalDailyEnergy[2][day][j]) / equalDailyEnergy[0][day][j])
+            hvsrTmp.append(hvsr0)
+         else:
+            if verbose > 0:
+               msgLib.warning(sys.argv[0], day+" missing component, skipped!")
+            missing += 1
+            continue
       else:
-         if verbose > 0:
-            msgLib.warning(sys.argv[0], day+" missing component, skipped!")
-         missing += 1
-         continue
+         if day in medianDailyPSD[0].keys() and day in medianDailyPSD[1].keys() and day in medianDailyPSD[2].keys():
+            PSD0  = [medianDailyPSD[0][day][j],medianDailyPSD[0][day][j+1]]
+            PSD1  = [medianDailyPSD[1][day][j],medianDailyPSD[1][day][j+1]]
+            PSD2  = [medianDailyPSD[2][day][j],medianDailyPSD[2][day][j+1]]
+            hvsr0 = getHvsr(PSD0,PSD1,PSD2,[xValues[j],xValues[j+1]],method=method)
+            hvsrTmp.append(hvsr0)
+         else:
+            if verbose > 0:
+               msgLib.warning(sys.argv[0], day+" missing component, skipped!")
+            missing += 1
+            continue
    if not np.isnan(np.sum(hvsrTmp)):
       hvsrPeaks.append(findPeaks(hvsrTmp)) 
 
@@ -1082,11 +1327,12 @@ peak   = checkFreqStability(peak,peakm,peakp)
 
 
 if doPlot > 0 and len(hvsr)>0:
+   nx = len(xValues) -1
    plt.suptitle(plotTitle)
    ax.append(plt.subplot(plotRows,1,4))
-   plt.semilogx(np.array(xValues),hvsr,lw=1,c='b')
-   plt.semilogx(np.array(xValues),hvsrp,c='r',lw=1,ls='--')
-   plt.semilogx(np.array(xValues),hvsrm,c='r',lw=1,ls='--')
+   plt.semilogx(np.array(xValues[0:nx]),hvsr,lw=1,c='b')
+   plt.semilogx(np.array(xValues[0:nx]),hvsrp,c='r',lw=1,ls='--')
+   plt.semilogx(np.array(xValues[0:nx]),hvsrm,c='r',lw=1,ls='--')
    #plt.semilogx(np.array(xValues),hvsrp2,c='r',lw=1,ls='--')
    #plt.semilogx(np.array(xValues),hvsrm2,c='r',lw=1,ls='--')
    plt.ylabel(param.hvsrYlabel)
@@ -1104,10 +1350,11 @@ if doPlot > 0 and len(hvsr)>0:
          plt.semilogx((peak[i]['f0'],peak[i]['f0']),(hvsrYlim[0],hvsrYlim[1]),c='#dcdcdc',lw=0.5)
 
    plt.savefig(os.path.join(param.imageDirectory+"/"+fileLib.hvsrFileName(network,station,location,start,end)).replace(".txt",".png"),dpi=param.imageDpi)
-
-printPeakReport(stationHeader,reportHeader,peak,reportinfo,minRank)
+if not dfa:
+   printPeakReport(stationHeader,reportHeader,peak,reportinfo,minRank)
 
 if doPlot > 0:
    if verbose >= 0:
       print ("SHOW")
    plt.show()
+
