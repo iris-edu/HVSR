@@ -6,7 +6,8 @@ import os, sys
 # HVSR configuration parameters for getStationChannelBaseline
 #
 # HISTORY
-#    2017-11-16 IRIS DMC Product Team (Manoch): public release (R.2017320)
+#    2018-07-10 IRIS DMC Product Team (Manoch): prerelease R.2018191
+#    2017-11-16 IRIS DMC Product Team (Manoch): (R.2017320)
 #    2017-03-12 IRIS DMC Product Team (Manoch): created (R.2017071)
 #
 # NOTES
