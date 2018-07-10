@@ -97,7 +97,7 @@ USAGE:
    
    computeHVSR.py net=TA sta=TCOL loc= chan=BHZ,BHN,BHE start=2013-01-01 end=2013-01-01 plot=1 plotbad=0 plotpsd=0 plotpdf=1 verbose=1 ymax=5 xtype=frequency n=1 removeoutliers=1 method=4
 
-net=nmetwork 
+net=network 
 
 sta=station 
 
