@@ -1,77 +1,88 @@
-import os, sys
-#
-# IRIS HVSR
-#
-# DESCRIPTION
-# HVSR configuration parameters for getStationChannelBaseline
-#
-# HISTORY
-#    2018-07-10 IRIS DMC Product Team (Manoch): prerelease R.2018191
-#    2017-11-16 IRIS DMC Product Team (Manoch): (R.2017320)
-#    2017-03-12 IRIS DMC Product Team (Manoch): created (R.2017071)
-#
-# NOTES
-#
-verbose          = 0
-parentDirectory  = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+"""
+IRIS HVSR bundle
 
-#
-# import the libraries
-#
+#DESCRIPTION:
+  HVSR configuration parameters for getStationChannelBaseline
+
+  HISTORY
+    2019-06-03 IRIS DMC Product Team (Manoch): Release V.2019.154
+    2018-07-10 IRIS DMC Product Team (Manoch): pre-release V.2018-191
+    2017-11-16 IRIS DMC Product Team (Manoch): (V.2017.320)
+    2017-03-12 IRIS DMC Product Team (Manoch): created (V.2017.071)
+"""
+
+import os
+import sys
+
+# The parent directory is one level up.
+parentDirectory  = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 libraryPath    = os.path.join(parentDirectory, 'lib')
-print("[INFO] libraryPath:",libraryPath)
 sys.path.append(libraryPath)
 
 import fileLib as fileLib
 
-#
-# URLs
-#
-mustangUrl = "http://service.iris.edu/mustang/noise-pdf/1/query?"
+# Print more information during execution [0=no, 1=yes].
+verbose          = 0
+print('[INFO] libraryPath: {}'.format(libraryPath))
 
-#
-# Directories
-#
-dataDirectory     = fileLib.mkdir(parentDirectory,"data")
-imageDirectory    = fileLib.mkdir(parentDirectory,os.path.join("image","baseline"))
-workDir           = fileLib.mkdir(parentDirectory,"scratch")
-baselineDirectory = fileLib.mkdir(dataDirectory,"baseline")
 
-#
-# default station info
-#
+# MUSTANG service URL.
+mustangUrl = 'http://service.iris.edu/mustang/noise-pdf/1/query?'
+
+# Default directory paths.
+dataDirectory     = fileLib.mkdir(parentDirectory, 'data')
+imageDirectory    = fileLib.mkdir(parentDirectory, os.path.join('image', 'baseline'))
+workDir           = fileLib.mkdir(parentDirectory, 'scratch')
+baselineDirectory = fileLib.mkdir(dataDirectory, 'baseline')
+
+# Default station channel codes.
 chan = 'BHZ,BH1,BH2'
 
-#
-# define x value type (period or frequency)
-#
-xtype      = "period"
+# X-axis  type ['period', 'frequency'].
+xtype      = 'period'
 
-#
-# percentiles
-#
+# Percentiles to compute.
 percenthigh = 90
 percentmid  = 50
 percentlow  = 5
 
-#
-# plot
-#
+
+# Plot parameters:
+
+# Plot the values [0=no, 1=yes]
 plot       = 0
-yLabel     = "Power (dB)"
-xLabel     = {"frequency":"Frequency (Hz)", "period":"Period (s)"}
-#xLim       = {"frequency":[0.01,20], "period":[0.2,200]}
-xLim       = {"frequency":[0.01,20], "period":[0.06,200]}
-#yLim       = [-150,-70]
+
+# Type of plot for the percent values ['line', 'scatter']
+percentPlotType = 'line'
+
+
+# Axes label.
+yLabel     = 'Power (dB)'
+xLabel     = {'frequency':'Frequency (Hz)', 'period':'Period (s)'}
+
+# Default x-axis limits for the two possible xtype above ['period', 'frequency'].
+xLim       = {'frequency':[0.01, 9], 'period':[0.15, 200]}
+
+# Default Y-axis limits.
 yLim       = [-200,-50]
 
+# Probability limits.
 pMin       = -0.3
 pMax       = 30
 
+# Color of the percentile markers/lines.
 colorLow   = 'black'
 colorMid   = 'yellow'
 colorHigh  = 'red'
+
+# Plot resolution.
 imageDpi   = 150
-imageSize  = [4.5,24.0]
-alpha      = 1.0
-lw         = 3
+
+# Plot size.
+imageSize  = [8.0, 6.0]
+
+# Value plot transparency.
+alpha      = 0.3
+
+# Line width for the lines/markers. percentile values use 50% thicker lines.
+lw         = 2
