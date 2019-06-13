@@ -34,6 +34,7 @@
         - Compute HVSR using one of the methods below (parameter: method=1|2|3|4|5|6).
         - Output a peak rank report with ranking based on SESAME 2004 (not avaiable for DFA method)
         - The HVSR computational methods supported:
+        
              (1) DFA, Diffuse Field Assumption method (Sánchez-Sesma et al., 2011)
                  NOTE: The MUSTANG noise-psd web service Power Spectral Density estimate for seismic channels are 
                  computed using the algorithm outlined here (http://service.iris.edu/mustang/noise-psd/docs/1/help/). 
