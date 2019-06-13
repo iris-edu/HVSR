@@ -45,6 +45,7 @@ hvsrDirectory     = fileLib.mkdir(dataDirectory,"hvsr")
 #
 chan = 'BHZ,BHN,BHE'
 
+n = 1
 #
 # define x value type (period or frequency)
 #
