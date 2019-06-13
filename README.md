@@ -33,7 +33,7 @@
              
                  NOTE: The MUSTANG noise-psd web service Power Spectral Density estimate for seismic channels are computed using the algorithm outlined here 
                        (http://service.iris.edu/mustang/noise-psd/docs/1/help/). This algorithm involves averaging and normalization that may result in 
-                       smoothing of some of the peaks that may otherwise be observed by direct computation of FFT and DFA. *This package uses peaks forto determine predominant frequency  only*.
+                       smoothing of some of the peaks that may otherwise be observed by direct computation of FFT and DFA. This package uses peaks forto determine predominant frequency  only.
                        
              (2) arithmetic mean, H ≡ (HN + HE)/2
              
