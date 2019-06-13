@@ -36,6 +36,7 @@
         - The HVSR computational methods supported:
         
              (1) DFA, Diffuse Field Assumption method (Sánchez-Sesma et al., 2011)
+             
                  NOTE: The MUSTANG noise-psd web service Power Spectral Density estimate for seismic channels are 
                  computed using the algorithm outlined here (http://service.iris.edu/mustang/noise-psd/docs/1/help/). 
                  This algorithm involves averaging and normalization that may result in smoothing of some of the peaks 
