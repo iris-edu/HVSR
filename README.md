@@ -12,28 +12,34 @@
 
  DESCRIPTION:
 
- The horizontal to vertical spectral ratio (HVSR) of ambient noise provides information on the fundamental natural frequency of the local sediments when
- there is a large acoustic impedance contrast between sediments and underlying rocks.
+  The horizontal to vertical spectral ratio (HVSR) of ambient noise provides information on the fundamental natural 
+ frequency of the local sediments when there is a large acoustic impedance contrast between sediments and underlying 
+ rocks.
 
- This IRIS DMC Python script bundle provides tools to compute and plot horizontal to vertical spectral ratio (HVSR) curves using IRIS DMC's MUSTANG PDF-PSD 
- web services.  The bundle contains 2 Python scripts: 
+ This IRIS DMC Python script bundle provides tools to compute and plot horizontal to vertical spectral ratio (HVSR) 
+ curves using IRIS DMC's MUSTANG PDF-PSD web services to determine predominant frequency of the station sites.  
+ The bundle contains 2 Python scripts: 
 
-   - computeStationChannelBaseline.py is a Python script that uses IRIS DMC's MUSTANG noise-pdf (http://service.iris.edu/mustang/) web service to 
-     compute channel-specific noise-baseline for a given station (McNamara et al., 2009). The resulting baseline represents the long-term PSD PDF 
-     characteristics of the station-channel pair in the form of median, lower and higher percentiles of the available PSDs for the station.
+   - computeStationChannelBaseline.py is a Python script that uses IRIS DMC's MUSTANG noise-pdf 
+     (http://service.iris.edu/mustang/) web service to compute channel-specific noise-baseline for a given station 
+     (McNamara et al., 2009). The resulting baseline represents the long-term PSD PDF 
+     characteristics of the station-channel pair in the form of median, lower and higher percentiles of the available 
+     PSDs for the station.
 
-   - computeHVSR.py - is a Python script that uses IRIS DMC's MUSTANG noise-psd/pdf web services (http://service.iris.edu/mustang/) to 
-     compute horizontal-to-vertical spectral ratio (HVSR) for a given station with the following options:
-        - Remove PSDs that fall outside the station noise baseline as computed by computeStationChannelBaseline.py above (parameter: removeoutliers=0|1).
+   - computeHVSR.py - is a Python script that uses IRIS DMC's MUSTANG noise-psd/pdf web services 
+     (http://service.iris.edu/mustang/) to compute horizontal-to-vertical spectral ratio (HVSR) for a given station with 
+     the following options:
+        - Remove PSDs that fall outside the station noise baseline as computed by computeStationChannelBaseline.py 
+          above (parameter: removeoutliers=0|1).
         - Compute HVSR using one of the methods below (parameter: method=1|2|3|4|5|6).
         - Output a peak rank report with ranking based on SESAME 2004 (not avaiable for DFA method)
         - The HVSR computational methods supported:
-        
              (1) DFA, Diffuse Field Assumption method (Sánchez-Sesma et al., 2011)
-             
-                 NOTE: The MUSTANG noise-psd web service Power Spectral Density estimate for seismic channels are computed using the algorithm outlined here 
-                       (http://service.iris.edu/mustang/noise-psd/docs/1/help/). This algorithm involves averaging and normalization that may result in 
-                       smoothing of some of the peaks that may otherwise be observed by direct computation of FFT and DFA. This package uses peaks to determine predominant frequency  only.
+                 NOTE: The MUSTANG noise-psd web service Power Spectral Density estimate for seismic channels are 
+                 computed using the algorithm outlined here (http://service.iris.edu/mustang/noise-psd/docs/1/help/). 
+                 This algorithm involves averaging and normalization that may result in smoothing of some of the peaks 
+                 that may otherwise be observed by direct computation of FFT and DFA. This package uses peaks to 
+                 determine predominant frequency  only.
                        
              (2) arithmetic mean, H ≡ (HN + HE)/2
              
