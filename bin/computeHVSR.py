@@ -45,6 +45,8 @@ OUTPUTS:
  the default values for the parameters between {} may be provided in the parameter file
 
  HISTORY:
+    2019-06-19 IRIS DMC Product Team (Manoch): V.2019.171, added Peterson 1993 NLNM and NHNM to the plots and updated
+                                               color scale.
     2019-06-03 IRIS DMC Product Team (Manoch): V.2019.154, updated the code style
     2018-07-10 IRIS DMC Product Team (Manoch): pre-release version V.2018.191
     2018-06-18 IRIS DMC Product Team (Manoch): added remove_outliers parameter to allow HVSR computation without
@@ -70,7 +72,7 @@ OUTPUTS:
 
 """
 
-version = 'V.2019.154'
+version = 'V.2019.171'
 
 import os
 import sys
@@ -142,8 +144,9 @@ def usage():
           '  - Output a peak rank report with ranking based on SESAME 2004 (modified and not available for DFA method'
           ')\n\n')
     print('\n\nUsage:\n{} net=netName sta=staName loc=locCode chan=chanCodes start=2013-01-01 end=2013-01-01\n'
-          'plot=[0, 1] plotbad=[0|1] plotpsd=[0|1] plotpdf=[0|1] verbose=[0|1] ymax=[maximum Y value]\n'
-          'xtype=[frequency|period] n=[number of segments] removeoutliers=[0|1] method=[1-6]'.format(script))
+          'plot=[0, 1] plotbad=[0|1] plotpsd=[0|1] plotpdf=[0|1] plotnnm=[0|1] verbose=[0|1] ymax=[maximum Y value]\n'
+          'xtype=[frequency|period] n=[number of segments] removeoutliers=[0|1] method=[1-6] showplot=[0|1]'
+          .format(script))
     print('\nnet\t\tstation network code'
           '\nsta\t\tstation code'
           '\nloc\t\tstation location code'
@@ -158,17 +161,22 @@ def usage():
           '\n\t\tcover start day only).'
           '\n\nverbose\t\tRun in verbose mode to provide informative messages [0=no, 1=yes];'
           '\n\t\tdefault:{}'
-          '\nplotbad\t\tplot rejected PSDs (float); default {}'
+          '\nplotbad\t\tplot rejected PSDs (float) if "plotpsd" option is selected; default {}'
+          '\nplotnnm\t\tplot the New Noise Models [0|1], active if plot=1; default {}'
           '\nplotpsd\t\tplot PSDs; default {}'
           '\nplotpdf\t\tplot PSD\\DFs; default {}'
           '\nymax\t\tmaximum Y values; default {}'
           '\nn\t\tbreak start-end interval into \'n\' segments; default {}'
           '\nremoveoutliers\tremove PSDs that fall outside the station noise baseline; default {}'
-          '\nymax\t\tmcompute H/V using method (see above); default {}'
-          .format(param.chan, param.xtype, param.verbose, param.plotbad, param.plotpsd, param.plotpdf, param.yLim[1],
-                  param.n, param.removeoutliers, param.method))
-    print('\n\nexamples:\n{} net=TA sta=TCOL loc= chan=BHZ,BHN,BHE start=2013-01-01 end=2013-01-01 plot=1 plotbad=0 '
+          '\nymax\t\tmcompute HVSR using method (see above); default {}'
+          '\nshowplot\tturn plot display on/off default is {} (plot file is generated for both options)'
+          .format(param.chan, param.xtype, param.verbose, param.plotbad, param.plotnnm, param.plotpsd, param.plotpdf,
+                  param.yLim[1],
+                  param.n, param.removeoutliers, param.method, param.showplot))
+    print('\n{} net=TA sta=TCOL loc=-- chan=BHZ,BHN,BHE start=2013-01-01 end=2013-01-01 plot=1 plotbad=0 '
           'plotpsd=0 plotpdf=1 verbose=1 ymax=5 xtype=frequency n=1 removeoutliers=0 method=4'.format(script))
+    print('\n{} net=TA sta=TCOL loc=-- chan=BHZ,BHN,BHE start=2013-01-01 end=2013-02-01 plot=1 plotbad=0 '
+          'plotpsd=0 plotpdf=1 verbose=1 ymax=5 xtype=frequency n=1 removeoutliers=1 method=4'.format(script))
     print('\n{} net=TA sta=M22K loc= chan=BHZ,BHN,BHE start=2017-01-01 end=2017-02-01 plot=1 plotbad=0 '
           'plotpsd=0 plotpdf=1 verbose=1 ymax=6 xtype=frequency n=1 removeoutliers=0 method=4'.format(script))
     print('\n{} net=TA sta=E25K loc= chan=BHZ,BHN,BHE start=2017-01-01 end=2017-02-01 plot=1 plotbad=0 '
@@ -180,6 +188,8 @@ def usage():
            '\tspectral ratio estimates. Geophysical Journal International. 194. 936-951. 10.1093/gji/ggt130.\n'
            '\nFrancisco J Sanchez-Sesma, Francisco & Rodriguez, Miguel & Iturraran-Viveros, Ursula & Luzon, Francisco\n'
            '\t& Campillo, Michel & Margerin, Ludovic & Garcia-Jerez, Antonio & Suarez, Martha & Santoyo, Miguel &\n'
+           '\nPeterson, J. (1993). Observations and modeling of seismic background noise, U.S. Geological Survey\n'
+           '\topen-file report (Vol. 93-322, p. 94). Albuquerque: U.S. Geological Survey.\n'
            '\nRodriguez-Castellanos, A. (2011). A theory for microtremor H/V spectral ratio: Application for a\n'
            '\tlayered medium. Geophysical Journal International. 186. 221-225. 10.1111/j.1365-246X.2011.05064.x.\n'
            '\nGuidelines for the Implementation of the H/V Spectral Ratio Technique on Ambient Vibrations, December\n'
@@ -234,16 +244,16 @@ def print_peak_report(_station_header, _report_header, _peak, _reportinfo, _min_
               '\t\t. there exist one frequency f+, lying between f0 and 4*f0, such that A0 / A(f+) > 2\n'
               '\t\t. A0 > 2\n\n'
               '\t- amplitude stability conditions:\n'
-              '\t\t. peak appear within +/-5% on H/V curves of mean +/- one standard deviation (f0+/f0-)\n'
+              '\t\t. peak appear within +/-5% on HVSR curves of mean +/- one standard deviation (f0+/f0-)\n'
               '\t\t. {}f lower than a frequency dependent threshold {}(f)\n'
               '\t\t. {}A lower than a frequency dependent threshold log {}(f)\n'.format(greek_chars['sigma'],
                                                                                         greek_chars['epsilon'],
                                                                                         greek_chars['sigma'],
                                                                                         greek_chars['teta']))
 
-    for _i in range(len(_peak)):
+    for _i, _peak_value in enumerate(_peak):
         _index.append(_i)
-        _rank.append(_peak[_i]['Score'])
+        _rank.append(_peak_value['Score'])
     _list = list(zip(_rank, _index))
     _list.sort(reverse=True)
 
@@ -251,7 +261,7 @@ def print_peak_report(_station_header, _report_header, _peak, _reportinfo, _min_
         print('\n%47s %10s %22s %12s %12s %32s %32s %27s %22s %17s'
               % ('Net.Sta.Loc.Chan', '    f0    ', '        A0 > 2        ', '     f-      ', '    f+     ',
                  '     f0- within ±5% of f0 &     ', '     f0+ within ±5% of f0       ', greek_chars['sigma'] +
-                 'f < ' + greek_chars['epsilon'] + ' * f0      ', greek_chars['sigma'] + 'logH/V < log' +
+                 'f < ' + greek_chars['epsilon'] + ' * f0      ', greek_chars['sigma'] + 'log HVSR < log' +
                  greek_chars['teta'] + '    ', '   Score/Max.    '))
         print('%47s %10s %22s %12s %12s %32s %32s %27s %22s %17s\n'
               % (47 * separator_character, 10 * separator_character, 22 * separator_character,
@@ -260,8 +270,8 @@ def print_peak_report(_station_header, _report_header, _peak, _reportinfo, _min_
                  7 * separator_character))
 
     _peak_visible = list()
-    for _i in range(len(_list)):
-        _index = _list[_i][1]
+    for _i, _list_value in enumerate(_list):
+        _index = _list_value[1]
         _peak_found = _peak[_index]
         if float(_peak_found['Score']) < _min_rank:
             continue
@@ -279,8 +289,12 @@ def get_args(_arg_list):
     """get the run arguments"""
     _args = {}
     for _i in range(1, len(_arg_list)):
-        _key, _value = _arg_list[_i].split('=')
-        _args[_key] = _value
+        try:
+            _key, _value = _arg_list[_i].split('=')
+            _args[_key] = _value
+        except Exception as _e:
+            msgLib.error('Bad parameter: {}, will use the default\n{}'.format(_arg_list[_i], _e), 1)
+            continue
     return _args
 
 
@@ -304,14 +318,13 @@ def check_y_range(_y, _low, _high):
     _not_ok = list()
 
     # use subtract operator to see if y and _low/_high are crossing
-
-    for _i in range(len(_y)):
-        _l = [_a - _b for _a, _b in zip(_y[_i], _low)]
+    for _i, _value in enumerate(_y):
+        _l = [_a - _b for _a, _b in zip(_value, _low)]
         if min(_l) < 0:
             _not_ok.append(_i)
             continue
 
-        _h = [_a - _b for _a, _b in zip(_y[_i], _high)]
+        _h = [_a - _b for _a, _b in zip(_value, _high)]
         if max(_h) > 0:
             _not_ok.append(_i)
             continue
@@ -622,7 +635,11 @@ def get_pdf(_url, _verbose):
     except Exception as _e:
         msgLib.error('\n\nReceived HTTP Error code: {}\n{}'.format(_e.code, _e.reason), 1)
         if _e.code == 404:
-            msgLib.error('Error 404: Not Found', 1)
+            _url_items = _url.split('&')
+            _starttime = [x for x in _url_items if x.startswith('starttime')]
+            _endtime = [x for x in _url_items if x.startswith('endtime')]
+            msgLib.error('Error 404: PDF not found in the range {} and {} when requested:\n{}'.format(
+                _starttime.split('=')[1], _endtime.split('=')[1], _url), 1)
         elif _e.code == 413:
             print('Note: Either use the run argument "n" to split the requested date range to smaller intervals'
                   '\nCurrent "n"" value is: {}. Or request a shorter time interval.'.format(n))
@@ -721,7 +738,7 @@ station = get_param(args, 'sta', msgLib, None)
 if station is None:
     msgLib.error('station not defined!', 1)
     sys.exit()
-location = get_param(args, 'loc', msgLib, None)
+location = get_param(args, 'loc', msgLib, '*')
 if location is None:
     msgLib.error('location not defined!', 1)
     sys.exit()
@@ -757,9 +774,11 @@ else:
 msgLib.info('Combining H1 and H2 Using {} method'.format(param.methodList[method]))
 
 do_plot = int(get_param(args, 'plot', msgLib, param.plot))
+show_plot = int(get_param(args, 'showplot', msgLib, param.plot))
 plot_psd = int(get_param(args, 'plotpsd', msgLib, param.plotpsd))
 plot_pdf = int(get_param(args, 'plotpdf', msgLib, param.plotpdf))
 plot_bad = int(get_param(args, 'plotbad', msgLib, param.plotbad))
+plot_nnm = int(get_param(args, 'plotnnm', msgLib, param.plotnnm))
 
 day_values_passed = [[], [], []]
 water_level = float(get_param(args, 'waterlevel', msgLib, param.waterlevel))
@@ -771,17 +790,18 @@ hvsr_band = get_param(args, 'hvsrband', msgLib, param.hvsrband)
 report_header = '.'.join([network, station, location, '-'.join(sorted_channel_list)])
 station_header = report_header
 station_header = '{} {} {}'.format(station_header, start, end)
-report_header += ' {} from {} to {}'.format(report_header, start, end)
+report_header += ' {} from {} to {}\nusing {}'.format(report_header, start, end, param.methodList[method])
 plot_title = report_header
 report_header = '{}\n\n'.format(report_header)
 
 # Turn off the display requirement if not needed.
-if not do_plot:
+if not show_plot:
     if verbose >= 0:
         msgLib.info('Plot Off')
     matplotlib.use('agg')
 else:
     from obspy.imaging.cm import pqlx
+    from obspy.signal.spectral_estimation import get_nlnm, get_nhnm
 
 # Do one channel at a time.
 channel_index = -1
@@ -858,7 +878,8 @@ for channel in sorted_channel_list:
         except Exception as _e:
             msgLib.error('\n\nReceived HTTP Error code: {}\n{}'.format(_e.code, _e.reason), 1)
             if _e.code == 404:
-                msgLib.error('Error 404: Not Found', 1)
+                msgLib.error('Error 404: No PSDs found in the range {}{} to {}{} when requested:\n\n{}'.format(
+                    date_list[date_index], start_hour, date_list[date_index + 1], end_hour, URL), 1)
                 continue
             elif _e.code == 413:
                 print('Note: Either use the run argument "n" to split the requested date range to smaller intervals'
@@ -929,7 +950,8 @@ for channel in sorted_channel_list:
 
     # Must have PSDs.
     if not psd_values:
-        msgLib.error(' '.join(['no PSDs found', date_list[date_index], date_list[date_index + 1]]), 1)
+        msgLib.error('no PSDs found to process between {} and {}'.format(
+            date_list[date_index], date_list[date_index + 1]), 1)
         sys.exit()
     else:
         if verbose >= 0:
@@ -976,9 +998,8 @@ for channel in sorted_channel_list:
 
     if verbose and notok:
         t0 = time_it(t0)
-        msgLib.info('FLAG BAD PSDs')
-    for i in range(len(ok)):
-        index = ok[i]
+        msgLib.info('Flag BAD PSDs')
+    for i, index in enumerate(ok):
         # DAY,DAYTIME: 2018-01-01 2018-01-01T00:00:00.000Z
         day = day_values[index]
         day_time = day_time_values[index]
@@ -998,21 +1019,27 @@ for channel in sorted_channel_list:
     if verbose and notok:
         t0 = time_it(t0)
 
-    # Plot the 'bad' PSDs in gray.
     if do_plot:
-        if plot_bad:
-            msgLib.info('[INFO] PLOT BAD PSDs')
-            for i in range(len(notok)):
-                plt.semilogx(np.array(x_values), psd_values[notok[i]], c='gray')
+        # Plot the 'bad' PSDs in gray.
+        if plot_psd and plot_bad:
+            msgLib.info('[INFO] Plot {} BAD PSDs'.format(len(notok)))
+            for i, index in enumerate(notok):
+                if i == 0:
+                    plt.semilogx(np.array(x_values), psd_values[index], c='gray', label='Rejected')
+                else:
+                    plt.semilogx(np.array(x_values), psd_values[index], c='gray')
             if verbose >= 0:
                 t0 = time_it(t0)
 
         if plot_psd:
             # Plot the 'good' PSDs in green.
             if verbose:
-                msgLib.info('[INFO] PLOT GOOD PSDs')
-            for i in range(len(ok)):
-                plt.semilogx(np.array(x_values), psd_values[ok[i]], c='green')
+                msgLib.info('[INFO] Plot {} GOOD PSDs'.format(len(ok)))
+            for i, index in enumerate(ok):
+                if i == 0:
+                    plt.semilogx(np.array(x_values), psd_values[index], c='green', label='PSD')
+                else:
+                    plt.semilogx(np.array(x_values), psd_values[index], c='green')
             if verbose >= 0:
                 t0 = time_it(t0)
         if plot_pdf:
@@ -1028,9 +1055,9 @@ for channel in sorted_channel_list:
         if verbose >= 0:
             t0 = time_it(t0)
         if remove_outliers:
-            plt.semilogx(np.array(x_values), pct_high, c='yellow', label=str(percent_high) + '%')
-            plt.semilogx(np.array(x_values), pct_mid, c='red', label=str(percent_mid) + '%')
-            plt.semilogx(np.array(x_values), pct_low, c='orange', label=str(percent_low) + '%')
+            plt.semilogx(np.array(x_values), pct_high, c='yellow', label='{}%'.format(percent_high))
+            plt.semilogx(np.array(x_values), pct_mid, c='red', label='{}%'.format(percent_mid))
+            plt.semilogx(np.array(x_values), pct_low, c='orange', label='{}%'.format(percent_low))
         plt.semilogx((param.hvsrXlim[0], param.hvsrXlim[0]), param.yLim, c='black')
         plt.semilogx((param.hvsrXlim[1], param.hvsrXlim[1]), param.yLim, c='black')
         p1 = plt.axvspan(param.xLim[xtype][0], param.hvsrXlim[0], facecolor='#909090', alpha=0.5)
@@ -1039,8 +1066,7 @@ for channel in sorted_channel_list:
         plt.ylim(param.yLim)
         plt.xlim(param.xLim[xtype])
         plt.ylabel(param.yLabel)
-        if remove_outliers:
-            plt.legend(loc='lower left')
+
         if len(ok) <= 0:
             anchored_text = AnchoredText(
                 ' '.join(['.'.join([network, station, location, channel]), '{:,d}'.format(len(psd_values)), 'PSDs']),
@@ -1051,18 +1077,32 @@ for channel in sorted_channel_list:
                  '{:,d}'.format(len(psd_values)), 'PSDs']), loc=2)
         ax[channel_index].add_artist(anchored_text)
 
+        if plot_nnm:
+            nlnm_x, nlnm_y = get_nlnm()
+            nhnm_x, nhnm_y = get_nhnm()
+            if xtype != 'period':
+                nlnm_x = 1.0 / nlnm_x
+                nhnm_x = 1.0 / nhnm_x
+            plt.plot(nlnm_x, nlnm_y, lw=2, ls='--', c='k', label='NLNM, NHNM')
+            plt.plot(nhnm_x, nhnm_y, lw=2, ls='--', c='k')
+
+        plt.legend(prop={'size': 6}, loc='lower left')
+
         # Create a second axes for the colorbar.
         if plot_pdf:
-            ax2 = fig.add_axes([0.92, 0.1, 0.01, 0.8])
-            fig.colorbar(im, ax2, orientation='vertical')
-            ax2.set_ylabel('Probability (%)', size=9, rotation=270, labelpad=7)
+            ax2 = fig.add_axes([0.92, 0.4, 0.01, 0.4])
+            cbar = fig.colorbar(im, ax2, orientation='vertical')
+            cbar.set_label('Probability (%)', size=9, rotation=270, labelpad=6)
             plt.clim(param.pMin, param.pMax)
+
 
     # Compute and save the median daily PSD for HVSR computation
     # for non-DFA computation.
+    # daily_psd[channel_index][day] is a list of individual PSDs for that channel and day. We compute median
+    # along axis=0 to get median of individual frequencies.
     if not dfa:
         if verbose:
-            msgLib.info('SAVE MEDIAN DAILY')
+            msgLib.info('Save Median Daily')
         for day in (day_values_passed[channel_index]):
             if display:
                 print('[INFO] calculating median_daily_psd')
@@ -1321,13 +1361,18 @@ peak = check_freq_stability(peak, peakm, peakp)
 if do_plot > 0 and len(hvsr) > 0:
     nx = len(x_values) - 1
     plt.suptitle(plot_title)
-    ax.append(plt.subplot(plotRows, 1, 4))
-    plt.semilogx(np.array(x_values[0:nx]), hvsr, lw=1, c='b')
-    plt.semilogx(np.array(x_values[0:nx]), hvsrp, c='r', lw=1, ls='--')
-    plt.semilogx(np.array(x_values[0:nx]), hvsrm, c='r', lw=1, ls='--')
+    if plot_pdf or plot_psd:
+        ax.append(plt.subplot(plotRows, 1, 4))
+    else:
+        ax.append(plt.subplot(1, 1, 1))
+
+    plt.semilogx(np.array(x_values[0:nx]), hvsr, lw=1, c='blue', label='HVSR')
+    plt.semilogx(np.array(x_values[0:nx]), hvsrp, c='red', lw=1, ls='--', label=u'\u00B11 \u03C3')
+    plt.semilogx(np.array(x_values[0:nx]), hvsrm, c='red', lw=1, ls='--')
     # plt.semilogx(np.array(x_values),hvsrp2,c='r',lw=1,ls='--')
     # plt.semilogx(np.array(x_values),hvsr_m2,c='r',lw=1,ls='--')
     plt.ylabel(param.hvsrYlabel)
+    plt.legend(loc='upper left')
 
     plt.xlim(param.hvsrXlim)
     ax[-1].set_ylim(hvsr_ylim)
@@ -1343,11 +1388,11 @@ if do_plot > 0 and len(hvsr) > 0:
 
     plt.savefig(
         os.path.join(param.imageDirectory + '/' + fileLib.hvsrFileName(network, station, location, start, end)).replace(
-            '.txt', '.png'), dpi=param.imageDpi)
+            '.txt', '.png'), dpi=param.imageDpi, transparent=True, bbox_inches='tight', pad_inches=0.1)
 if not dfa:
     print_peak_report(station_header, report_header, peak, report_information, min_rank)
 
-if do_plot:
+if show_plot:
     if verbose >= 0:
         print ('SHOW')
     plt.show()
