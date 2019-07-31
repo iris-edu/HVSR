@@ -3,44 +3,51 @@
  Data Products Team
  horizontal to vertical spectral ratio (HVSR)
 
- 2018-07-10
+ 2019-07-31
+ V.2019.212
 
 ------------------------------------------------------------------------------------------------------------------------
 
  DESCRIPTION:
 
- The horizontal to vertical spectral ratio (HVSR) of ambient noise provides information on the fundamental natural 
- frequency of the local sediments when there is a large acoustic impedance contrast between sediments and underlying 
- rocks.
+The Horizontal to Vertical Spectral Ratio (HVSR) is a popular method that easily provides the predominant frequency at 
+a given site. In this paper, we introduce the Incorporated Research Institutions for Seismology (IRIS) Data Management 
+Center’s (DMC’s) HVSR station toolbox that is available to the community. This toolbox offers sundry ways to compute the 
+ratio by providing different averaging routines. They go from the simple average of spectral ratios to the ratio of
+ spectral averages. Computations take advantage of the available power spectral density and probability density function 
+ estimates of the ambient noise for the seismic stations and as such, can readily be used to estimate the predominant 
+ frequency of the many three-component seismic stations available from IRIS. To facilitate identification of the clear 
+ HVSR peaks and estimate of the predominant frequency of station sites, this toolbox further processes the results of 
+ HVSR analysis to detect and rank HVSR peaks.
 
- This IRIS DMC Python script bundle provides tools to compute and plot horizontal to vertical spectral ratio (HVSR) 
- curves using IRIS DMC's MUSTANG PDF-PSD web services to determine predominant frequency of the station sites.  
- The bundle contains 2 Python scripts: 
+This toolbox contains two tools (scripts) to assist with HVSR analysis: 1) the station baseline and 2) the HVSR tool.
 
-   - computeStationChannelBaseline.py is a Python script that uses IRIS DMC's MUSTANG noise-pdf 
-     (http://service.iris.edu/mustang/) web service to compute channel-specific noise-baseline for a given station 
-     (McNamara et al., 2009). The resulting baseline represents the long-term PSD PDF 
-     characteristics of the station-channel pair in the form of median, lower and higher percentiles of the available 
-     PSDs for the station.
-
-   - computeHVSR.py - is a Python script that uses IRIS DMC's MUSTANG noise-psd/pdf web services 
-     (http://service.iris.edu/mustang/) to compute horizontal-to-vertical spectral ratio (HVSR) for a given station with 
-     the following options:
+   - computeStationChannelBaseline.py uses IRIS DMC’s MUSTANG noise-pdf web service to compute channel-specific 
+     noise-baseline for a given station following the technique outlined by McNamara et al., 2009. The objective of this 
+     script is to provide an insight into station’s ambient seismic field power characteristics. For each channel, the 
+     computed baseline represents the probability density function (PDF) characteristics of the PSDs in the form of 
+     median, lower and higher percentiles of the available PSDs. 
+     
+   - computeHVSR.py - uses IRIS DMC’s MUSTANG noise-psd and noise-pdf web services to compute HVSR for a given station 
+     based on the MUSTANG hourly PSDs. HVSR estimates are obtained by converting hourly PSDs to median daily spectral 
+     powers and then HVSRs are computed using one of the 6 different available methods including the Diffuse Field 
+     Assumption method (DFA), as described by Sánchez-Sesma et al. (2011) or the average of spectral ratios, similar 
+     to the method used by McNamara et al. (2015). Options available include:
         - Remove PSDs that fall outside the station noise baseline as computed by computeStationChannelBaseline.py 
           above (parameter: removeoutliers=0|1).
         - Compute HVSR using one of the methods below (parameter: method=1|2|3|4|5|6).
         - Output a peak rank report with ranking based on SESAME 2004 (not avaiable for DFA method)
         - The HVSR computational methods supported:
-        
              (1) DFA, Diffuse Field Assumption method (Sánchez-Sesma et al., 2011)
-             
                  NOTE: The MUSTANG noise-psd web service Power Spectral Density estimate for seismic channels are 
-                 computed using the algorithm outlined here (http://service.iris.edu/mustang/noise-psd/docs/1/help/). 
-                 This algorithm involves averaging and normalization that may result in smoothing of some of the peaks 
-                 that may otherwise be observed by direct computation of FFT and DFA. This package uses peaks to 
-                 determine predominant frequency  only.
+                       computed using the algorithm outlined here: 
+                       (http://service.iris.edu/mustang/noise-psd/docs/1/help/)
+                       This algorithm involves averaging and normalization that may result in smoothing of some of the 
+                       peaks that may otherwise be observed by direct computation of FFT and DFA. With this smoothing, 
+                       the DFA results tend to be closer to the vector summation method, method (4) below.
 
-         ior HVSR computation by combining the two horizontal components using one of the methods referenced by Albarello and Lunedei (2013):
+             or HVSR computation by combining the two horizontal components using one of the methods referenced by 
+             Albarello and Lunedei (2013):
              (2) arithmetic mean, H ≡ (HN + HE)/2
              (3) geometric mean, H ≡ √HN · HE
              (4) vector summation, H ≡ √H2 N + H2 E 
@@ -78,64 +85,110 @@
 
 USAGE:
    
-   bin/computeStationChannelBaseline.py
-       Call the script and provide the run arguments. By defining a parameter on the command line, user overrides the values defined for that parameter in the parameter file. 
-       The call should have the form:
+getStationChannelBaseline.py net=netName sta=staName loc=locCode chan=chanCode
+	start=2007-03-19 end=2008-10-28 plot=[0|1] plotnnm=[0|1]verbose=[0, 1] percentlow=[10] 
+	percenthigh=[90] xtype=[period,frequency]
 
-             getStationChannelBaseline.py net=netName sta=staName loc=locCode {chan=chanCode} start=2007-03-20 end=2008-10-28 {plot=[0,1] verbose=[0,1] percentlow=[10] percenthigh=[90] xtype=[period,frequency]}
-         
-             Note:
-       
-             the default values for the parameters between {} may be provided in the parameter file
- 
-   bin/computeHVSR.py
-       Call the script and provide the run arguments. By defining a parameter on the command line, user overrides the values defined for that parameter in the parameter file.
-       The call should have the form:
+net		station network code
+sta		station code
+loc		station location code
+chan		station channel code (separate multiple channel codes by comma); 
+		default: BHZ,BH1,BH2
+xtype		X-axis  type; default: period
+start		start date of the interval for which station baseline is computed (format YYYY-MM-DD).
+		The start day begins at 00:00:00 UTC
+end		end date of the interval for which station baseline is computed (format YYYY-MM-DD).
+		The end day ends at 23:59:59 UTC
 
-              network station location channel list     start date       end date  plot(1/0) plot      plot accepted     verbose    y-axis x-axis type     break start-end     remove PSDs that fall
-                  |       |       |    |                |                 |             | rejected     accepted    plot  output(1/0)  max      |           interval into "n"   outside the station 
-                  |       |       |    |                |                 |             |   PSDs(1/0)   PSDs(1/0)  PDFs(1/0) |         |       |              | segments       noise baseline
-                  |       |       |    |                |                 |             |       |         |        |         |         |       |              |                  |        
-                  |       |       |    |                |                 |             |       |         |        |         |         |       |              |                  |      compute H/V using method (see above) 
-                  |       |       |    |                |                 |             |       |         |        |         |         |       |              |                  |        |
-   computeHVSR.py net=TA sta=TCOL loc= chan=BHZ,BHN,BHE start=2013-01-01 end=2013-01-01 plot=1 plotbad=0 plotpsd=0 plotpdf=1 verbose=1 ymax=5 xtype=frequency n=1 removeoutliers=1 method=4
+		NOTE: PSD segments will be limited to those starting between start (inclusive) and 
+		end (exclusive) except when start and end are the same (in that case, the range will 
+		cover start day only).
 
-             Note:
+verbose		Run in verbose mode to provide informative messages [0=no, 1=yes];
+		default:0
+percentlow	lowest percentile to compute (float); default 5
+percenthigh	Highest percentile to compute (float); default 90
+plot		plot values [0|1]
+plotnnm		plot the New Noise Models [0|1], active if plot=1
 
-             any parameter given on the command line will override the one defined in the parameter file
+
+computeHVSR.py net=netName sta=staName loc=locCode chan=chanCodes start=2013-01-01 end=2013-01-01
+plot=[0, 1] plotbad=[0|1] plotpsd=[0|1] plotpdf=[0|1] plotnnm=[0|1] verbose=[0|1] ymax=[maximum Y value]
+xtype=[frequency|period] n=[number of segments] removeoutliers=[0|1] method=[1-6] showplot=[0|1]
+
+net		station network code
+sta		station code
+loc		station location code
+chan	station channel code (separate multiple channel codes by comma); 
+		default: BHZ,BHN,BHE
+xtype	X-axis  type; default: frequency
+start	start date of the interval for which HVSR to be computed (format YYYY-MM-DD).
+		The start day begins at 00:00:00 UTC
+end		end date of the interval for which station baseline is computed (format YYYY-MM-DD).
+		The end day ends at 23:59:59 UTC
+
+		NOTE: PSD segments will be limited to those starting between start (inclusive) and 
+		end (exclusive) except when start and end are the same (in that case, the range will 
+		cover start day only).
+
+verbose		Run in verbose mode to provide informative messages [0=no, 1=yes];
+		    default:1
+plotbad		plot rejected PSDs (float) if "plotpsd" option is selected; default 0
+plotnnm		plot the New Noise Models [0|1], active if plot=1; default 1
+plotpsd		plot PSDs; default 0
+plotpdf		plot PSD\DFs; default 1
+ymax		maximum Y values; default -50
+n		    break start-end interval into 'n' segments; default 1
+removeoutliers	remove PSDs that fall outside the station noise baseline; default 1
+ymax		mcompute HVSR using method (see above); default 4
+showplot	turn plot display on/off default is 1 (plot file is generated for both options)
+
 
 
 EXAMPLES:
 
+getStationChannelBaseline.py net=IU sta=ANMO loc=00 chan=BHZ start=2002-11-20 end=2008-11-20 plot=1 plotnnm=1 verbose=1 percentlow=10 percenthigh=90
 
-             bin/getStationChannelBaseline.py net=IU sta=ANMO loc=00 chan=BHZ,BH1,BH2 start=2002-11-19 end=2008-11-13 plot=1 verbose=0 percentlow=10 percenthigh=90
-             bin/getStationChannelBaseline.py net=IU sta=ANMO loc=00 start=2002-11-19 end=2008-11-13 plot=1
-             bin/getStationChannelBaseline.py net=IU sta=ANMO loc=00 chan=BH1 start=2002-11-19 end=2008-11-13 plot=1
+getStationChannelBaseline.py net=TA sta=TCOL loc=-- chan=BHZ,BHN,BHE start=2013-01-01 end=2014-01-01 plot=1 plotnnm=1 verbose=1 percentlow=10 percenthigh=90
 
-             bin/computeHVSR.py net=IU sta=ANMO loc=00 chan=BHZ,BH1,BH2 start=2007-05-01 end=2007-06-01 plot=1 verbose=1 ylim=5 removeoutliers=1 method=4
-             bin/computeHVSR.py net=UW sta=RATT loc= chan=BHZ,BHN,BHE start=2014-01-01 end=2017-01-01 plot=1 plotbad=0 plotpsd=0 plotpdf=1 verbose=0 ylim=5 xtype=frequency n=20 removeoutliers=0 method=4
+computeHVSR.py net=TA sta=TCOL loc=-- chan=BHZ,BHN,BHE start=2013-01-01 end=2013-01-01 plot=1 plotbad=0 plotpsd=0 plotpdf=1 verbose=1 ymax=5 xtype=frequency n=1 removeoutliers=0 method=4
+
+computeHVSR.py net=TA sta=TCOL loc=-- chan=BHZ,BHN,BHE start=2013-01-01 end=2013-02-01 plot=1 plotbad=0 plotpsd=0 plotpdf=1 verbose=1 ymax=5 xtype=frequency n=1 removeoutliers=1 method=4
+
+computeHVSR.py net=TA sta=M22K loc= chan=BHZ,BHN,BHE start=2017-01-01 end=2017-02-01 plot=1 plotbad=0 plotpsd=0 plotpdf=1 verbose=1 ymax=6 xtype=frequency n=1 removeoutliers=0 method=4
+
+computeHVSR.py net=TA sta=E25K loc= chan=BHZ,BHN,BHE start=2017-01-01 end=2017-02-01 plot=1 plotbad=0 plotpsd=0 plotpdf=1 verbose=1 ymax=5 xtype=frequency n=1 removeoutliers=0 method=4
+
+computeHVSR.py net=TA sta=E25K loc= chan=BHZ,BHN,BHE start=2017-07-01 end=2017-08-01 plot=1 plotbad=0 plotpsd=0 plotpdf=1 verbose=1 ymax=5 xtype=frequency n=1 removeoutliers=0 method=4
 
 REFERENCES:
 
-Albarello, Dario & Lunedei, Enrico. (2013). Combining horizontal ambient vibration components for H/V spectral ratio estimates. Geophysical Journal International. 194. 936-951. 10.1093/gji/ggt130.
+Albarello, Dario & Lunedei, Enrico. (2013). Combining horizontal ambient vibration components for H/V 
+	spectral ratio estimates. Geophysical Journal International. 194. 936-951. 10.1093/gji/ggt130.
 
-McNamara D.E., C.R. Hutt, L.S. Gee, H.M. Benz, and R.P. Buland, 2009, A method to establish seismic noise baselines for automated station assessment, Seismological Research Letters Jul 2009, 80 (4) 628-637; 
-DOI: 10.1785/gssrl.80.4.628.  http://srl.geoscienceworld.org/content/gssrl/80/4/628.full.pdf
+Francisco J Sanchez-Sesma, Francisco & Rodriguez, Miguel & Iturraran-Viveros, Ursula & Luzon, Francisco
+	& Campillo, Michel & Margerin, Ludovic & Garcia-Jerez, Antonio & Suarez, Martha & Santoyo, Miguel &
 
-Francisco J Sánchez-Sesma, Francisco & Rodriguez, Miguel & Iturraran-Viveros, Ursula & Luzón, Francisco & Campillo, Michel & Margerin, Ludovic & García-Jerez, Antonio & Suarez, Martha & Santoyo, Miguel & 
-Rodríguez-Castellanos, A. (2011). A theory for microtremor H/V spectral ratio: Application for a layered medium. Geophysical Journal International. 186. 221-225. 10.1111/j.1365-246X.2011.05064.x. 
+Peterson, J. (1993). Observations and modeling of seismic background noise, U.S. Geological Survey
+	open-file report (Vol. 93-322, p. 94). Albuquerque: U.S. Geological Survey.
 
-Guidelines for the Implementation of the H/V Spectral Ratio Technique on Ambient Vibrations, December 2004
-SESAME European research project WP12 – Deliverable D23.12, European Commission – Research General Directorate
-Project No. EVG1-CT-2000-00026 SESAME.
-ftp://ftp.geo.uib.no/pub/seismo/SOFTWARE/SESAME/USER-GUIDELINES/SESAME-HV-User-Guidelines.pdf
+Rodriguez-Castellanos, A. (2011). A theory for microtremor H/V spectral ratio: Application for a
+	layered medium. Geophysical Journal International. 186. 221-225. 10.1111/j.1365-246X.2011.05064.x.
+
+Guidelines for the Implementation of the H/V Spectral Ratio Technique on Ambient Vibrations, December
+	2004  Project No. EVG1-CT-2000-00026 SESAME.
+		ftp://ftp.geo.uib.no/pub/seismo/SOFTWARE/SESAME/USER-GUIDELINES/SESAME-HV-User-Guidelines.pdf
+
+
 
 
  HISTORY
-    - 2018-07-10: prerelease R.2018191
-    - 2017-11-28: computeHVSR R.2017332
-    - 2017-11-16: initial version R.2017320
+    - 2019-07-31  Release R.1.0
+    - 2018-07-10: prerelease V.2018.191
+    - 2017-11-28: computeHVSR V.2017.332
+    - 2017-11-16: initial version V.2017.320
  
  COMMENTS/QUESTIONS:
 
     Please contact manoch@iris.washington.edu
+
