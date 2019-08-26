@@ -94,8 +94,8 @@ def usage():
     print('\n\nUsage:\n{} net=netName sta=staName loc=locCode chan=chanCode\n\tstart=2007-03-19 '
           'end=2008-10-28 plot=[0|1] plotnnm=[0|1]' 
           'verbose=[0, 1] percentlow=[10] \n\tpercenthigh=[90] xtype=[period,frequency]'.format(script))
-    print('\nnet\t\tstation network code'
-          '\nsta\t\tstation code'
+    print('\nnet\t\tstation network name'
+          '\nsta\t\tstation name'
           '\nloc\t\tstation location code'
           '\nchan\t\tstation channel code (separate multiple channel codes by comma); \n\t\tdefault: {}'
           '\nxtype\t\tX-axis  type; default: {}'

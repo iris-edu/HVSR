@@ -147,8 +147,8 @@ def usage():
           'plot=[0, 1] plotbad=[0|1] plotpsd=[0|1] plotpdf=[0|1] plotnnm=[0|1] verbose=[0|1] ymax=[maximum Y value]\n'
           'xtype=[frequency|period] n=[number of segments] removeoutliers=[0|1] method=[1-6] showplot=[0|1]'
           .format(script))
-    print('\nnet\t\tstation network code'
-          '\nsta\t\tstation code'
+    print('\nnet\t\tstation network name'
+          '\nsta\t\tstation name'
           '\nloc\t\tstation location code'
           '\nchan\t\tstation channel code (separate multiple channel codes by comma); \n\t\tdefault: {}'
           '\nxtype\t\tX-axis  type; default: {}'
