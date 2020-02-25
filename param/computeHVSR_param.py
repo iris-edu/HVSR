@@ -5,6 +5,7 @@
  computeHVSR.py configuration parameters
 
  HISTORY
+  2020-02-24 IRIS DMC Product Team (Manoch): added reportDirectory V.2020.055
   2019-07-31 IRIS DMC Product Team (Manoch): style update V.2019.212
   2018-07-10 IRIS DMC Product Team (Manoch): pre-release V.2018.191
   2018-06-18 IRIS DMC Product Team (Manoch): added removeOutliers parameter to allow HVSR computation without 
@@ -38,6 +39,7 @@ dataDirectory = fileLib.mkdir(parentDirectory, 'data')
 imageDirectory = fileLib.mkdir(parentDirectory, os.path.join('image', 'hvsr'))
 workDir = fileLib.mkdir(parentDirectory, 'scratch')
 baselineDirectory = fileLib.mkdir(dataDirectory, 'baseline')
+reportDirectory = fileLib.mkdir(dataDirectory, 'report')
 hvsrDirectory = fileLib.mkdir(dataDirectory, 'hvsr')
 
 # Default station channel list.
