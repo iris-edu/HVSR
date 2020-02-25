@@ -1,5 +1,17 @@
-R.1.0 Release
+R.1.1 Release
 
+param/computeHVSR_param.py
+    2020-02-24 IRIS DMC Product Team (Manoch): added reportDirectory V.2020.055.
+
+bin/computeHVSR.py
+    2020-02-24 IRIS DMC Product Team (Manoch): V.2020.055, now the peak report is also writen to a file under the
+                                               data/report directory.
+
+lib/fileLib.py
+    2020-02-24  IRIS DMC Product Team (Manoch): style update V.2020.055
+========================================
+
+R.1.0 Release
 
 bin/getStationChannelBaseline.py
      2019-06-19 IRIS DMC Product Team (Manoch): V.2019.171, added Peterson 1993 NLNM and NHNM to the plots and updated
