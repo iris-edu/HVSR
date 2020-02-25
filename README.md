@@ -1,10 +1,10 @@
  Incorporated Research Institutions for Seismology (IRIS)
  Data Management Center (DMC)
  Data Products Team
- horizontal to vertical spectral ratio (HVSR)
+ Horizontal to Vertical Spectral Ratio (HVSR) Toolbox
 
- 2019-07-31
- V.2019.212
+ 2020-02-24
+ V.2020.055
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -161,6 +161,16 @@ computeHVSR.py net=TA sta=E25K loc= chan=BHZ,BHN,BHE start=2017-01-01 end=2017-0
 
 computeHVSR.py net=TA sta=E25K loc= chan=BHZ,BHN,BHE start=2017-07-01 end=2017-08-01 plot=1 plotbad=0 plotpsd=0 plotpdf=1 verbose=1 ymax=5 xtype=frequency n=1 removeoutliers=0 method=4
 
+
+CITATION:
+
+To cite the use of this software please cite:
+Manochehr Bahavar, Zack J Spica, Francisco J Sánchez-Sesma, Chad Trabant, Arash Zandieh, Gabriel Toro; 
+    Horizontal-to-Vertical Spectral Ratio (HVSR) IRIS Station Toolbox. Seismological Research Letters, under review.
+
+Or cite the following DOI:
+    10.17611/dp/hvsrtool.1
+
 REFERENCES:
 
 Albarello, Dario & Lunedei, Enrico. (2013). Combining horizontal ambient vibration components for H/V 
@@ -183,6 +193,7 @@ Guidelines for the Implementation of the H/V Spectral Ratio Technique on Ambient
 
 
  HISTORY
+    - 2020-02-24 Release R.1.1
     - 2019-07-31  Release R.1.0
     - 2018-07-10: prerelease V.2018.191
     - 2017-11-28: computeHVSR V.2017.332
