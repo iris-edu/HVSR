@@ -45,6 +45,8 @@ OUTPUTS:
  the default values for the parameters between {} may be provided in the parameter file
 
  HISTORY:
+    2020-02-24 IRIS DMC Product Team (Manoch): V.2020.055, now the peak report is also writen to a file under the
+                                               data/report directory.
     2019-06-19 IRIS DMC Product Team (Manoch): V.2019.171, added Peterson 1993 NLNM and NHNM to the plots and updated
                                                color scale.
     2019-06-03 IRIS DMC Product Team (Manoch): V.2019.154, updated the code style
@@ -72,7 +74,7 @@ OUTPUTS:
 
 """
 
-version = 'V.2019.171'
+version = 'V.2020.055'
 
 import os
 import sys
@@ -237,6 +239,27 @@ def print_peak_report(_station_header, _report_header, _peak, _reportinfo, _min_
     _rank = list()
 
     if report_information:
+        report_file_name = os.path.join(param.reportDirectory, fileLib.baselineFileName(
+            network, station, location, channel))
+        report_file = open(report_file_name, 'w')
+
+        # Write the report to the report file.
+        report_file.write('\n\nPeaks:\n'
+                          'Parameters and ranking (A0: peak amplitude, f0: peak frequency):\n\n'
+                          '\t- amplitude clarity conditions:\n'
+                          '\t\t. there exist one frequency f-, lying between f0/4 and f0, such that A0 / A(f-) > 2\n'
+                          '\t\t. there exist one frequency f+, lying between f0 and 4*f0, such that A0 / A(f+) > 2\n'
+                          '\t\t. A0 > 2\n\n'
+                          '\t- amplitude stability conditions:\n'
+                          '\t\t. peak appear within +/-5% on HVSR curves of mean +/- one standard deviation (f0+/f0-)\n'
+                          '\t\t. {}f lower than a frequency dependent threshold {}(f)\n'
+                          '\t\t. {}A lower than a frequency dependent threshold log {}(f)\n'.format(
+            greek_chars['sigma'],
+            greek_chars['epsilon'],
+            greek_chars['sigma'],
+            greek_chars['teta']))
+
+        # Also output the report to the terminal.
         print('\n\nPeaks:\n'
               'Parameters and ranking (A0: peak amplitude, f0: peak frequency):\n\n'
               '\t- amplitude clarity conditions:\n'
@@ -258,11 +281,24 @@ def print_peak_report(_station_header, _report_header, _peak, _reportinfo, _min_
     _list.sort(reverse=True)
 
     if report_information:
+        report_file.write('\n%47s %10s %22s %12s %12s %32s %32s %27s %22s %17s'
+                          % ('Net.Sta.Loc.Chan', '    f0    ', '        A0 > 2        ', '     f-      ', '    f+     ',
+                             '     f0- within ±5% of f0 &     ', '     f0+ within ±5% of f0       ',
+                             greek_chars['sigma'] +
+                             'f < ' + greek_chars['epsilon'] + ' * f0      ', greek_chars['sigma'] + 'log HVSR < log' +
+                             greek_chars['teta'] + '    ', '   Score/Max.    \n'))
+        report_file.write('%47s %10s %22s %12s %12s %32s %32s %27s %22s %17s\n'
+                          % (47 * separator_character, 10 * separator_character, 22 * separator_character,
+                             12 * separator_character, 12 * separator_character, 32 * separator_character,
+                             32 * separator_character, 27 * separator_character, 22 * separator_character,
+                             7 * separator_character))
+
         print('\n%47s %10s %22s %12s %12s %32s %32s %27s %22s %17s'
               % ('Net.Sta.Loc.Chan', '    f0    ', '        A0 > 2        ', '     f-      ', '    f+     ',
                  '     f0- within ±5% of f0 &     ', '     f0+ within ±5% of f0       ', greek_chars['sigma'] +
                  'f < ' + greek_chars['epsilon'] + ' * f0      ', greek_chars['sigma'] + 'log HVSR < log' +
-                 greek_chars['teta'] + '    ', '   Score/Max.    '))
+                 greek_chars['teta'] + '    ', '   Score/Max.    \n'))
+
         print('%47s %10s %22s %12s %12s %32s %32s %27s %22s %17s\n'
               % (47 * separator_character, 10 * separator_character, 22 * separator_character,
                  12 * separator_character, 12 * separator_character, 32 * separator_character,
@@ -277,11 +313,21 @@ def print_peak_report(_station_header, _report_header, _peak, _reportinfo, _min_
             continue
         else:
             _peak_visible.append(True)
+
+        report_file.write('%47s %10.3f %22s %12s %12s %32s %32s %27s %22s %12d/%0d\n' %
+              (_station_header, _peak_found['f0'], _peak_found['Report']['A0'], _peak_found['f-'], _peak_found['f+'],
+               _peak_found['Report']['P-'], _peak_found['Report']['P+'], _peak_found['Report']['Sf'],
+               _peak_found['Report']['Sa'], _peak_found['Score'], max_rank))
+
         print('%47s %10.3f %22s %12s %12s %32s %32s %27s %22s %12d/%0d\n' %
               (_station_header, _peak_found['f0'], _peak_found['Report']['A0'], _peak_found['f-'], _peak_found['f+'],
                _peak_found['Report']['P-'], _peak_found['Report']['P+'], _peak_found['Report']['Sf'],
                _peak_found['Report']['Sa'], _peak_found['Score'], max_rank))
+
     if len(_list) <= 0 or len(_peak_visible) <= 0:
+        report_file.write('%47s\n' % _station_header)
+        report_file.close()
+
         print('%47s\n' % _station_header)
 
 
@@ -1394,6 +1440,6 @@ if not dfa:
 
 if show_plot:
     if verbose >= 0:
-        print ('SHOW')
+        print('SHOW')
     plt.show()
 
