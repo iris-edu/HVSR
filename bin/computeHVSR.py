@@ -45,6 +45,7 @@ OUTPUTS:
  the default values for the parameters between {} may be provided in the parameter file
 
  HISTORY:
+    2020-06-03 IRIS DMC Product Team (Manoch): V.2020.155, addressed the UTF-8 character issue on Windows.
     2020-02-24 IRIS DMC Product Team (Manoch): V.2020.055, now the peak report is also writen to a file under the
                                                data/report directory.
     2019-06-19 IRIS DMC Product Team (Manoch): V.2019.171, added Peterson 1993 NLNM and NHNM to the plots and updated
@@ -74,7 +75,7 @@ OUTPUTS:
 
 """
 
-version = 'V.2020.055'
+version = 'V.2020.155'
 
 import os
 import sys
@@ -94,7 +95,6 @@ import matplotlib.pyplot as plt
 from matplotlib.offsetbox import AnchoredText
 
 # Import the HVSR parameters and libraries.
-
 hvsrDirectory = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 paramPath = os.path.join(hvsrDirectory, 'param')
@@ -201,13 +201,22 @@ def usage():
     print ('\n\n\n')
 
 
+def get_char(in_char):
+    """Output character with proper encoding/decoding"""
+    if in_char in greek_chars.keys():
+        out_char = greek_chars[in_char].encode(encoding='utf-8')
+    else:
+        out_char = in_char.encode(encoding='utf-8')
+    return out_char.decode('utf-8')
+
+
 def time_it(_t):
     """Compute elapsed time since the last call."""
     t1 = time.time()
     dt = t1 - _t
     t = _t
     if dt > 0.05:
-        print('[TIME] {} seconds'.format(dt))
+        print(f'[TIME] {dt:0.1f} s', flush=True)
         t = t1
     return t
 
@@ -241,7 +250,10 @@ def print_peak_report(_station_header, _report_header, _peak, _reportinfo, _min_
     if report_information:
         report_file_name = os.path.join(param.reportDirectory, fileLib.baselineFileName(
             network, station, location, channel))
-        report_file = open(report_file_name, 'w')
+
+        # In mac(python 3) the following statement works perfectly with just open without encoding, but
+        # in windows(w10, python3) this is is not an option and we have to include the encoding='utf-8' param.
+        report_file = open(report_file_name, 'w', encoding='utf-8')
 
         # Write the report to the report file.
         report_file.write('\n\nPeaks:\n'
@@ -253,11 +265,8 @@ def print_peak_report(_station_header, _report_header, _peak, _reportinfo, _min_
                           '\t- amplitude stability conditions:\n'
                           '\t\t. peak appear within +/-5% on HVSR curves of mean +/- one standard deviation (f0+/f0-)\n'
                           '\t\t. {}f lower than a frequency dependent threshold {}(f)\n'
-                          '\t\t. {}A lower than a frequency dependent threshold log {}(f)\n'.format(
-            greek_chars['sigma'],
-            greek_chars['epsilon'],
-            greek_chars['sigma'],
-            greek_chars['teta']))
+                          '\t\t. {}A lower than a frequency dependent threshold log {}(f)\n'.
+                          format(get_char('sigma'), get_char('epsilon'), get_char('sigma'), get_char('teta')))
 
         # Also output the report to the terminal.
         print('\n\nPeaks:\n'
@@ -269,10 +278,8 @@ def print_peak_report(_station_header, _report_header, _peak, _reportinfo, _min_
               '\t- amplitude stability conditions:\n'
               '\t\t. peak appear within +/-5% on HVSR curves of mean +/- one standard deviation (f0+/f0-)\n'
               '\t\t. {}f lower than a frequency dependent threshold {}(f)\n'
-              '\t\t. {}A lower than a frequency dependent threshold log {}(f)\n'.format(greek_chars['sigma'],
-                                                                                        greek_chars['epsilon'],
-                                                                                        greek_chars['sigma'],
-                                                                                        greek_chars['teta']))
+              '\t\t. {}A lower than a frequency dependent threshold log {}(f)\n'.
+              format(get_char('sigma'), get_char('epsilon'), get_char('sigma'), get_char('teta')), flush=True)
 
     for _i, _peak_value in enumerate(_peak):
         _index.append(_i)
@@ -284,9 +291,9 @@ def print_peak_report(_station_header, _report_header, _peak, _reportinfo, _min_
         report_file.write('\n%47s %10s %22s %12s %12s %32s %32s %27s %22s %17s'
                           % ('Net.Sta.Loc.Chan', '    f0    ', '        A0 > 2        ', '     f-      ', '    f+     ',
                              '     f0- within ±5% of f0 &     ', '     f0+ within ±5% of f0       ',
-                             greek_chars['sigma'] +
-                             'f < ' + greek_chars['epsilon'] + ' * f0      ', greek_chars['sigma'] + 'log HVSR < log' +
-                             greek_chars['teta'] + '    ', '   Score/Max.    \n'))
+                             get_char('sigma') +
+                             'f < ' + get_char('epsilon') + ' * f0      ', get_char('sigma') + 'log HVSR < log' +
+                             get_char('teta') + '    ', '   Score/Max.    \n'))
         report_file.write('%47s %10s %22s %12s %12s %32s %32s %27s %22s %17s\n'
                           % (47 * separator_character, 10 * separator_character, 22 * separator_character,
                              12 * separator_character, 12 * separator_character, 32 * separator_character,
@@ -294,16 +301,17 @@ def print_peak_report(_station_header, _report_header, _peak, _reportinfo, _min_
                              7 * separator_character))
 
         print('\n%47s %10s %22s %12s %12s %32s %32s %27s %22s %17s'
-              % ('Net.Sta.Loc.Chan', '    f0    ', '        A0 > 2        ', '     f-      ', '    f+     ',
-                 '     f0- within ±5% of f0 &     ', '     f0+ within ±5% of f0       ', greek_chars['sigma'] +
-                 'f < ' + greek_chars['epsilon'] + ' * f0      ', greek_chars['sigma'] + 'log HVSR < log' +
-                 greek_chars['teta'] + '    ', '   Score/Max.    \n'))
+                          % ('Net.Sta.Loc.Chan', '    f0    ', '        A0 > 2        ', '     f-      ', '    f+     ',
+                             '     f0- within ±5% of f0 &     ', '     f0+ within ±5% of f0       ',
+                             get_char('sigma') +
+                             'f < ' + get_char('epsilon') + ' * f0      ', get_char('sigma') + 'log HVSR < log' +
+                             get_char('teta') + '    ', '   Score/Max.    \n'), flush=True)
 
         print('%47s %10s %22s %12s %12s %32s %32s %27s %22s %17s\n'
               % (47 * separator_character, 10 * separator_character, 22 * separator_character,
                  12 * separator_character, 12 * separator_character, 32 * separator_character,
                  32 * separator_character, 27 * separator_character, 22 * separator_character,
-                 7 * separator_character))
+                 7 * separator_character), flush=True)
 
     _peak_visible = list()
     for _i, _list_value in enumerate(_list):
@@ -322,13 +330,13 @@ def print_peak_report(_station_header, _report_header, _peak, _reportinfo, _min_
         print('%47s %10.3f %22s %12s %12s %32s %32s %27s %22s %12d/%0d\n' %
               (_station_header, _peak_found['f0'], _peak_found['Report']['A0'], _peak_found['f-'], _peak_found['f+'],
                _peak_found['Report']['P-'], _peak_found['Report']['P+'], _peak_found['Report']['Sf'],
-               _peak_found['Report']['Sa'], _peak_found['Score'], max_rank))
+               _peak_found['Report']['Sa'], _peak_found['Score'], max_rank), flush=True)
 
     if len(_list) <= 0 or len(_peak_visible) <= 0:
         report_file.write('%47s\n' % _station_header)
         report_file.close()
 
-        print('%47s\n' % _station_header)
+        print('%47s\n' % _station_header, flush=True)
 
 
 def get_args(_arg_list):
@@ -480,7 +488,7 @@ def check_clarity(_x, _y, _peak, do_rank=False):
     for _i in range(len(_peak)):
 
         if float(_peak[_i]['A0']) > _a0:
-            _peak[_i]['Report']['A0'] = '%10.2f > %0.1f %1s' % (_peak[_i]['A0'], _a0, u'\u2713')
+            _peak[_i]['Report']['A0'] = '%10.2f > %0.1f %1s' % (_peak[_i]['A0'], _a0, get_char(u'\u2714'))
             _peak[_i]['Score'] += 1
         else:
             _peak[_i]['Report']['A0'] = '%10.2f > %0.1f  ' % (_peak[_i]['A0'], _a0)
@@ -495,7 +503,7 @@ def check_clarity(_x, _y, _peak, do_rank=False):
             # There exist one frequency f-, lying between f0/4 and f0, such that A0 / A(f-) > 2.
             if (float(_peak[_i]['f0']) / 4.0 <= _x[_j] < float(_peak[_i]['f0'])) and \
                     float(_peak[_i]['A0']) / _y[_j] > 2.0:
-                _peak[_i]['f-'] = '%10.3f %1s' % (_x[_j], u'\u2713')
+                _peak[_i]['f-'] = '%10.3f %1s' % (_x[_j], get_char(u'\u2714'))
                 _peak[_i]['Score'] += 1
                 break
 
@@ -508,7 +516,7 @@ def check_clarity(_x, _y, _peak, do_rank=False):
             # There exist one frequency f+, lying between f0 and 4*f0, such that A0 / A(f+) > 2.
             if float(_peak[_i]['f0']) * 4.0 >= _x[_j] > float(_peak[_i]['f0']) and \
                     float(_peak[_i]['A0']) / _y[_j] > 2.0:
-                _peak[_i]['f+'] = '%10.3f %1s' % (_x[_j], u'\u2713')
+                _peak[_i]['f+'] = '%10.3f %1s' % (_x[_j], get_char(u'\u2714'))
                 _peak[_i]['Score'] += 1
                 break
 
@@ -558,7 +566,7 @@ def check_freq_stability(_peak, _peakm, _peakp):
             if _peak[_i]['f0'] * 0.95 <= _peakp[_j]['f0'] <= _peak[_i]['f0'] * 1.05:
                 if _found_m[_i]:
                     _peak[_i]['Report']['P+'] = '%0.3f within ±5%s of %0.3f %1s' % (
-                        _peakp[_j]['f0'], '%', _peak[_i]['f0'], u'\u2713')
+                        _peakp[_j]['f0'], '%', _peak[_i]['f0'], get_char(u'\u2714'))
                     _peak[_i]['Score'] += 1
                 else:
                     _peak[_i]['Report']['P+'] = '%0.3f within ±5%s of %0.3f %1s' % (
@@ -592,14 +600,16 @@ def check_stability(_stdf, _peak, _hvsr_log_std, rank):
         if _this_peak['f0'] < 0.2:
             _e = 0.25
             if _stdf[_i] < _e * _this_peak['f0']:
-                _peak[_i]['Report']['Sf'] = '%10.4f < %0.2f * %0.3f %1s' % (_stdf[_i], _e, _this_peak['f0'], u'\u2713')
+                _peak[_i]['Report']['Sf'] = '%10.4f < %0.2f * %0.3f %1s' % (_stdf[_i], _e, _this_peak['f0'],
+                                                                            get_char(u'\u2714'))
                 _this_peak['Score'] += 1
             else:
                 _peak[_i]['Report']['Sf'] = '%10.4f < %0.2f * %0.3f  ' % (_stdf[_i], _e, _this_peak['f0'])
 
             _t = 0.48
             if _hvsr_log_std[_i] < _t:
-                _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f %1s' % (_hvsr_log_std[_i], _t, u'\u2713')
+                _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f %1s' % (_hvsr_log_std[_i], _t,
+                                                                    get_char(u'\u2714'))
                 _this_peak['Score'] += 1
             else:
                 _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f  ' % (_hvsr_log_std[_i], _t)
@@ -607,14 +617,16 @@ def check_stability(_stdf, _peak, _hvsr_log_std, rank):
         elif 0.2 <= _this_peak['f0'] < 0.5:
             _e = 0.2
             if _stdf[_i] < _e * _this_peak['f0']:
-                _peak[_i]['Report']['Sf'] = '%10.4f < %0.2f * %0.3f %1s' % (_stdf[_i], _e, _this_peak['f0'], u'\u2713')
+                _peak[_i]['Report']['Sf'] = '%10.4f < %0.2f * %0.3f %1s' % (_stdf[_i], _e, _this_peak['f0'],
+                                                                            get_char(u'\u2714'))
                 _this_peak['Score'] += 1
             else:
                 _peak[_i]['Report']['Sf'] = '%10.4f < %0.2f * %0.3f  ' % (_stdf[_i], _e, _this_peak['f0'])
 
             _t = 0.40
             if _hvsr_log_std[_i] < _t:
-                _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f %1s' % (_hvsr_log_std[_i], _t, u'\u2713')
+                _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f %1s' % (_hvsr_log_std[_i], _t,
+                                                                    get_char(u'\u2714'))
                 _this_peak['Score'] += 1
             else:
                 _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f  ' % (_hvsr_log_std[_i], _t)
@@ -622,14 +634,15 @@ def check_stability(_stdf, _peak, _hvsr_log_std, rank):
         elif 0.5 <= _this_peak['f0'] < 1.0:
             _e = 0.15
             if _stdf[_i] < _e * _this_peak['f0']:
-                _peak[_i]['Report']['Sf'] = '%10.4f < %0.2f * %0.3f %1s' % (_stdf[_i], _e, _this_peak['f0'], u'\u2713')
+                _peak[_i]['Report']['Sf'] = '%10.4f < %0.2f * %0.3f %1s' % (_stdf[_i], _e, _this_peak['f0'],
+                                                                            get_char(u'\u2714'))
                 _this_peak['Score'] += 1
             else:
                 _peak[_i]['Report']['Sf'] = '%10.4f < %0.2f * %0.3f  ' % (_stdf[_i], _e, _this_peak['f0'])
 
             _t = 0.3
             if _hvsr_log_std[_i] < _t:
-                _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f %1s' % (_hvsr_log_std[_i], _t, u'\u2713')
+                _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f %1s' % (_hvsr_log_std[_i], _t, get_char(u'\u2714'))
                 _this_peak['Score'] += 1
             else:
                 _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f  ' % (_hvsr_log_std[_i], _t)
@@ -637,14 +650,15 @@ def check_stability(_stdf, _peak, _hvsr_log_std, rank):
         elif 1.0 <= _this_peak['f0'] <= 2.0:
             _e = 0.1
             if _stdf[_i] < _e * _this_peak['f0']:
-                _peak[_i]['Report']['Sf'] = '%10.4f < %0.2f * %0.3f %1s' % (_stdf[_i], _e, _this_peak['f0'], u'\u2713')
+                _peak[_i]['Report']['Sf'] = '%10.4f < %0.2f * %0.3f %1s' % (_stdf[_i], _e, _this_peak['f0'],
+                                                                            get_char(u'\u2714'))
                 _this_peak['Score'] += 1
             else:
                 _peak[_i]['Report']['Sf'] = '%10.4f < %0.2f * %0.3f  ' % (_stdf[_i], _e, _this_peak['f0'])
 
             _t = 0.25
             if _hvsr_log_std[_i] < _t:
-                _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f %1s' % (_hvsr_log_std[_i], _t, u'\u2713')
+                _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f %1s' % (_hvsr_log_std[_i], _t, get_char(u'\u2714'))
                 _this_peak['Score'] += 1
             else:
                 _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f  ' % (_hvsr_log_std[_i], _t)
@@ -652,14 +666,15 @@ def check_stability(_stdf, _peak, _hvsr_log_std, rank):
         elif _this_peak['f0'] > 0.2:
             _e = 0.05
             if _stdf[_i] < _e * _this_peak['f0']:
-                _peak[_i]['Report']['Sf'] = '%10.4f < %0.2f * %0.3f %1s' % (_stdf[_i], _e, _this_peak['f0'], u'\u2713')
+                _peak[_i]['Report']['Sf'] = '%10.4f < %0.2f * %0.3f %1s' % (_stdf[_i], _e, _this_peak['f0'],
+                                                                            get_char(u'\u2714'))
                 _this_peak['Score'] += 1
             else:
                 _peak[_i]['Report']['Sf'] = '%10.4f < %0.2f * %0.3f  ' % (_stdf[_i], _e, _this_peak['f0'])
 
             _t = 0.2
             if _hvsr_log_std[_i] < _t:
-                _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f %1s' % (_hvsr_log_std[_i], _t, u'\u2713')
+                _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f %1s' % (_hvsr_log_std[_i], _t, get_char(u'\u2714'))
                 _this_peak['Score'] += 1
             else:
                 _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f  ' % (_hvsr_log_std[_i], _t)
@@ -688,7 +703,7 @@ def get_pdf(_url, _verbose):
                 _starttime.split('=')[1], _endtime.split('=')[1], _url), 1)
         elif _e.code == 413:
             print('Note: Either use the run argument "n" to split the requested date range to smaller intervals'
-                  '\nCurrent "n"" value is: {}. Or request a shorter time interval.'.format(n))
+                  '\nCurrent "n"" value is: {}. Or request a shorter time interval.'.format(n), flush=True)
             sys.exit(1)
         msgLib.error('failed on target {} {}'.format(target, URL), 1)
         return _x, _y, _p
@@ -929,7 +944,7 @@ for channel in sorted_channel_list:
                 continue
             elif _e.code == 413:
                 print('Note: Either use the run argument "n" to split the requested date range to smaller intervals'
-                      '\nCurrent "n"" value is: {}. Or request a shorter time interval.'.format(n))
+                      '\nCurrent "n"" value is: {}. Or request a shorter time interval.'.format(n), flush=True)
                 sys.exit(1)
             msgLib.error('failed on target {} {}'.format(target, URL), 1)
 
@@ -1009,7 +1024,7 @@ for channel in sorted_channel_list:
     if channel_index == 0:
         if do_plot:
             if verbose >= 0:
-                msgLib.info('[INFO] PLOT PSD')
+                msgLib.info('PLOT PSD')
 
             fig = plt.figure(figsize=param.imageSize, facecolor='white')
             ax = list()
@@ -1040,7 +1055,7 @@ for channel in sorted_channel_list:
         ['Channel', channel, str(len(psd_values)), 'PSDs,', str(len(ok)), 'accepted and', str(len(notok)), 'rejected',
          '\n'])
     report_header += info
-    print ('[INFO]:', info)
+    print ('[INFO]', info)
 
     if verbose and notok:
         t0 = time_it(t0)
@@ -1151,7 +1166,7 @@ for channel in sorted_channel_list:
             msgLib.info('Save Median Daily')
         for day in (day_values_passed[channel_index]):
             if display:
-                print('[INFO] calculating median_daily_psd')
+                print('[INFO] calculating median_daily_psd', flush=True)
                 display = False
             median_daily_psd[channel_index][day] = np.percentile(daily_psd[channel_index][day], 50, axis=0)
 
@@ -1160,7 +1175,7 @@ for channel in sorted_channel_list:
 # the same as large ones, so that P1+P2+P3=1
 if dfa:
     if display:
-        print('[INFO] DFA')
+        print('[INFO] DFA', flush=True)
         display = False
     sum_ns_power = list()
     sum_ew_power = list()
@@ -1413,7 +1428,8 @@ if do_plot > 0 and len(hvsr) > 0:
         ax.append(plt.subplot(1, 1, 1))
 
     plt.semilogx(np.array(x_values[0:nx]), hvsr, lw=1, c='blue', label='HVSR')
-    plt.semilogx(np.array(x_values[0:nx]), hvsrp, c='red', lw=1, ls='--', label=u'\u00B11 \u03C3')
+    plt.semilogx(np.array(x_values[0:nx]), hvsrp, c='red', lw=1, ls='--',
+                 label='{} {}'.format(get_char(u'\u00B11'), get_char(u'\u03C3')))
     plt.semilogx(np.array(x_values[0:nx]), hvsrm, c='red', lw=1, ls='--')
     # plt.semilogx(np.array(x_values),hvsrp2,c='r',lw=1,ls='--')
     # plt.semilogx(np.array(x_values),hvsr_m2,c='r',lw=1,ls='--')
@@ -1440,6 +1456,6 @@ if not dfa:
 
 if show_plot:
     if verbose >= 0:
-        print('SHOW')
+        msgLib.info('SHOW PLOT')
     plt.show()
 
