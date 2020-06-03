@@ -1,3 +1,16 @@
+R.1.2 Release
+
+bin/computeHVSR.py
+    2020-06-03 IRIS DMC Product Team (Manoch): V.2020.155, addressed the UTF-8 character issue on Windows.
+
+lib/msgLib.py
+    2020-06-03 IRIS DMC Product Team (Manoch): style update V.2020.155
+
+INSTALL.txt
+    2020-06-03 Upgrade to Python 3.7
+
+========================================
+
 R.1.1 Release
 
 param/computeHVSR_param.py
