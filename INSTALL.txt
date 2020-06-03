@@ -4,7 +4,7 @@
  Data Products Team
  horizontal to vertical spectral ratio (HVSR)
 
- 2018-07-10
+ 2020-06-03
 
 ----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -24,187 +24,27 @@
  PYTHON REQUIREMENTS:
 
     Basic installation:
-       - this bundle was created and tested under Python 3.5.3;
+       - this bundle was created and tested under Python 3.7.6;
 
        - additional required Python module(s): 
-             . numpy  1.11.3
-             . obspy   1.0.2
+             . numpy        1.18.4
+             . obspy         1.2.1
+             . scipy         1.4.1
+             . matplotlib    3.2.1
 
  BUNDLE INSTALLATION:
-    - bin, lib and param directories and their contents are required. Other needed directories will be created by the script
+    - bin, lib and param directories and their contents are populated and required by the package. Other needed directories will be created by the script
 
  CONFIGURE THE PACKAGE:
     - if necessary, update the Python path on the first line of the bin/computeStationChannelBaseline.py and bin/computeHVSR.py scripts 
     - if desired, configure the package by updating param/getStationChannelBaseline_param.py and param/computeHVSR_param.py files
 
  PACKAGE TEST:
-    - To test the package, run the script with no arguments and it should print the following USAGE texts:
+    - To test the package, run the scripts with no arguments and their should print the  corresponding USAGE messages.
 
            1.   bin/getStationChannelBaseline.py
 
-
-[INFO] getStationChannelBaseline.py, getStationChannelBaseline_param, R.2018191
-[INFO] Param Path: /products/hvsr/Release/HVSR/param
-[INFO] libraryPath: /products/hvsr/Release/HVSR/lib
-[INFO] loaded: getStationChannelBaseline_param
-
-[ERROR] missing parameter net
-
-
-
-USAGE(R.2018191):
-
-getStationChannelBaseline.py net=netName sta=staName loc=locCode chan=chanCode start=2007-03-19 end=2008-10-28 plot=[0,1] verbose=[0,1] percentlow=[10] percenthigh=[90] xtype=[period,frequency]
-getStationChannelBaseline.py net=IU sta=ANMO loc=00 chan=BHZ start=2002-11-19 end=2008-11-13 plot=1 verbose=1 percentlow=10 percenthigh=90
-
-
-            2.  bin/computeHVSR.py 
-
-
-USAGE(R.2018191):
-
-
-              network station location channel list     start date       end date  plot(1/0) plot      plot accepted     verbose    y-axis x-axis type     break start-end     remove PSDs that fall
-                  |       |       |    |                |                 |             | rejected     accepted    plot  output(1/0)  max      |           interval into 'n'   outside the station
-                  |       |       |    |                |                 |             |   PSDs(1/0)   PSDs(1/0)  PDFs(1/0) |         |       |              | segments       noise baseline
-                  |       |       |    |                |                 |             |       |         |        |         |         |       |              |                  |
-                  |       |       |    |                |                 |             |       |         |        |         |         |       |              |                  |      compute H/V using method (see below)
-                  |       |       |    |                |                 |             |       |         |        |         |         |       |              |                  |        |
-   computeHVSR.py net=TA sta=TCOL loc= chan=BHZ,BHN,BHE start=2013-01-01 end=2013-01-01 plot=1 plotbad=0 plotpsd=0 plotpdf=1 verbose=1 ymax=5 xtype=frequency n=1 removeoutliers=1 method=4
-
-       method:
-             (1) DFA, Diffuse Field Assumption method (Sánchez-Sesma et al., 2011)
-                 NOTE: The MUSTANG noise-psd web service Power Spectral Density estimate for seismic channels are computed using the algorithm outlined here
-                       (http://service.iris.edu/mustang/noise-psd/docs/1/help/). This algorithm involves averaging and normalization that may result in
-                       smoothing of some of the peaks that may otherwise be observed by direct computation of FFT and DFA. With this smoothing the DFA
-                       results tend to be closer to the vector summation method, method (4) below.
-
-             NOTE: methods 2-6 are referenced by Albarello and Lunedei (2013)
-             (2) arithmetic mean, H ≡ (HN + HE)/2
-             (3) geometric mean, H ≡ √HN · HE
-             (4) vector summation, H ≡ √H2 N + H2 E
-             (5) quadratic mean, H ≡ √(H2 N + H2 E )/2
-             (6) maximum horizontal value, H ≡ max {HN, HE}
-
-
-Albarello, Dario & Lunedei, Enrico. (2013). Combining horizontal ambient vibration components for H/V spectral ratio estimates. Geophysical Journal International. 194. 936-951. 10.1093/gji/ggt130.
-Francisco J Sánchez-Sesma, Francisco & Rodriguez, Miguel & Iturraran-Viveros, Ursula & Luzón, Francisco & Campillo, Michel & Margerin, Ludovic & García-Jerez, Antonio & Suarez, Martha & Santoyo, Miguel &
-
-Rodríguez-Castellanos, A. (2011). A theory for microtremor H/V spectral ratio: Application for a layered medium. Geophysical Journal International. 186. 221-225. 10.1111/j.1365-246X.2011.05064.x.
-
-Guidelines for the Implementation of the H/V Spectral Ratio Technique on Ambient Vibrations, December 2004
-SESAME European research project WP12 – Deliverable D23.12, European Commission – Research General Directorate
-Project No. EVG1-CT-2000-00026 SESAME.
-ftp://ftp.geo.uib.no/pub/seismo/SOFTWARE/SESAME/USER-GUIDELINES/SESAME-HV-User-Guidelines.pdf
-
-
-
-    - To verify that script is properly configured, run the following:
-
-            1.  bin/getStationChannelBaseline.py net=IU sta=ANMO loc=00 start=2002-11-19 end=2008-11-13 plot=1
-
-              by executing the above command, you should get the following message and the following files will be created:
-                         /HVSR/data/baseline/IU.ANMO.00.BHZ.txt
-                         /HVSR/data/baseline/IU.ANMO.00.BH1.txt
-                         /HVSR/data/baseline/IU.ANMO.00.BH2.txt
-                         /HVSR/image/baseline/IU.ANMO.00.BHZ-BH1-BH2_period.png   
-
-[INFO] getStationChannelBaseline.py, getStationChannelBaseline_param, R.2018191
-[INFO] Param Path: /products/hvsr/Release/HVSR/param
-[INFO] libraryPath: /products/hvsr/Release/HVSR/lib
-[INFO] loaded: getStationChannelBaseline_param
-[INFO] net: IU
-[INFO] sta: ANMO
-[INFO] loc: 00
-[INFO] start: 2002-11-19
-[INFO] end: 2008-11-13
-[INFO] plot: 1
-[INFO] requesting IU.ANMO.00.BHZ.M from 2002-11-19 to 2008-11-13
-[INFO] waiting for reply....
-[INFO] baseline file:/products/hvsr/Release/HVSR/data/baseline/IU.ANMO.00.BHZ.txt
-[INFO] PLOT Station-Channel Baseline
-[INFO] requesting IU.ANMO.00.BH1.M from 2002-11-19 to 2008-11-13
-[INFO] waiting for reply....
-[INFO] baseline file:/products/hvsr/Release/HVSR/data/baseline/IU.ANMO.00.BH1.txt
-[INFO] PLOT Station-Channel Baseline
-[INFO] requesting IU.ANMO.00.BH2.M from 2002-11-19 to 2008-11-13
-[INFO] waiting for reply....
-[INFO] baseline file:/products/hvsr/Release/HVSR/data/baseline/IU.ANMO.00.BH2.txt
-[INFO] PLOT Station-Channel Baseline
-[INFO] Saved plot file: /products/hvsr/Release/HVSR/image/baseline/IU.ANMO.00.BHZ-BH1-BH2_period.png
-[INFO] Show
-
-
-
-            2.  bin/computeHVSR.py net=IU sta=ANMO loc=00 chan=BHZ,BH1,BH2 start=2007-05-01 end=2007-06-01 plot=1 verbose=1 ylim=5 method=2
-              by executing the above command, you should get the following message and the following files will be created:
-
-                         /HVSR/data/hvsr/M2/IU.ANMO.00.2007-05-01.2007-06-01.HVSR.txt
-                         /HVSR/image/hvsr/IU.ANMO.00.2007-05-01.2007-06-01.HVSR.png
-
-
-[INFO] bin/computeHVSR.py R.2018191
-[INFO] removeOutliers: False
-[INFO] DATE LIST: ['2007-05-01', '2007-06-01']
-[INFO] Using arithmetic mean
-[INFO] requesting IU.ANMO.00.BHZ.* from 2007-05-01 to 2007-06-01
-[INFO] doing  2007-05-01T00:00:00 to 2007-06-01T00:00:00
-[INFO] requesting:http://service.iris.edu/mustang/noise-psd/1/query?target=IU.ANMO.00.BHZ.*&starttime=2007-05-01T00:00:00&endtime=2007-06-01T00:00:00&format=xml&correct=true
-[TIME] 2.4060726165771484 seconds
-[INFO] PSD waiting for reply....
-[INFO] PsdRoot
-[INFO] PSD: 1457
-[TIME] 1.4760887622833252 seconds
-[INFO] requesting:http://service.iris.edu/mustang/noise-pdf/1/query?target=IU.ANMO.00.BHZ.*&starttime=2007-05-01&endtime=2007-06-01&format=text
-[INFO] PDF waiting for reply....
-[INFO] PDF: 2603
-[INFO] total PSDs:1457
-[TIME] 0.5049405097961426 seconds
-[INFO] [INFO] PLOT PSD
-[INFO]: Channel BHZ 1457 PSDs, 1457 accepted and 0 rejected 
-
-[INFO] [INFO] TUNE PLOTS
-[TIME] 0.30347776412963867 seconds
-[INFO]: Channel BH1 1457 PSDs, 1457 accepted and 0 rejected 
-.
-.
-.
-[INFO] [INFO] TUNE PLOTS
-[TIME] 0.09142494201660156 seconds
-[INFO] SAVE MEDIAN DAILY
-[INFO] requesting IU.ANMO.00.BH2.* from 2007-05-01 to 2007-06-01
-[INFO] total PSDs:1457
-[TIME] 0.4857015609741211 seconds
-[INFO]: Channel BH2 1457 PSDs, 1457 accepted and 0 rejected 
-
-[INFO] [INFO] TUNE PLOTS
-[TIME] 0.0935676097869873 seconds
-[INFO] SAVE MEDIAN DAILY
-[INFO] HVSR computation
-OUT FILE: /products/hvsr/Release/HVSR/data/hvsr/M2/IU.ANMO.00.2007-05-01.2007-06-01.HVSR.txt
-
-
-Peaks:
-Parameters and ranking based on SESAME 2004 (A0: peak amplitude, f0: peak frequency):
-
-- amplitude clarity conditions:
-    . there exist one frequency f-, lying between f0/4 and f0, such that A0 / A(f-) > 2
-    . there exist one frequency f+, lying between f0 and 4*f0, such that A0 / A(f+) > 2
-    . A0 > 2
-
-- amplitude stability conditions:
-    . peak appear within +/-5% on H/V curves of mean +/- one standard deviation (f0+/f0-)
-    . σf lower than a frequency dependent threshold ε(f)
-    . σA lower than a frequency dependent threshold log θ(f)
-
-
-                               Net.Sta.Loc.Chan     f0             A0 > 2              f-            f+           f0- within ±5% of f0 &           f0+ within ±5% of f0                  σf < ε * f0           σlogH/V < logθ        Score/Max.    
-================================================ ========== ====================== ============ ============ ================================ ================================ =========================== ====================== =================
-
-   IU.ANMO.00.BHZ-BH1-BH2 2007-05-01 2007-06-01      8.300           1.03 > 2.0              -            -      8.300 within ±5% of 8.300 &      8.300 within ±5% of 8.300 ✓     0.0030 < 0.05 * 8.300 ✓        0.0678 < 0.20 ✓            3/6
-NOTE: At the end of the run a plot should appear
-
-
+    - Simply run any of the examples provided in the usage message.
 
 REFERENCES:
 
