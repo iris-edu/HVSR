@@ -4,13 +4,13 @@
  Data Products Team
  horizontal to vertical spectral ratio (HVSR)
 
- 2020-06-03
+ 2020-06-04
 
 ----------------------------------------------------------------------------------------------------------------------------------------
 
  DESCRIPTION:
 
- An IRIS DMC Python script bundle to compute and plot  horizontal to vertical spectral ratio (HVSR) curves using MUSTANG PDF-PSD web service from IRIS
+ An IRIS DMC Python script bundle to compute and plot  horizontal to vertical spectral ratio (HVSR) curves using MUSTANG PDF-PSD web service from IRIS.
  The bundle contains 2 Python scripts:
 
    - computeStationChannelBaseline.py is a Python script that uses MUSTANG's noise-pdf (http://service.iris.edu/mustang/) web service to 
@@ -33,16 +33,20 @@
              . matplotlib    3.2.1
 
  BUNDLE INSTALLATION:
+    - unpack the package
     - bin, lib and param directories and their contents are populated and required by the package. Other needed directories will be created by the script
+      under the root directory of the bundle
 
  CONFIGURE THE PACKAGE:
+    You should be able to run the package examples without any modifications. However:
     - if necessary, update the Python path on the first line of the bin/computeStationChannelBaseline.py and bin/computeHVSR.py scripts 
     - if desired, configure the package by updating param/getStationChannelBaseline_param.py and param/computeHVSR_param.py files
 
  PACKAGE TEST:
-    - To test the package, run the scripts with no arguments and their should print the  corresponding USAGE messages.
+    - To test the package, run the scripts with no arguments and they will print the  corresponding USAGE messages.
 
-           1.   bin/getStationChannelBaseline.py
+           bin/getStationChannelBaseline.py
+           bin/computeHVSR.py
 
     - Simply run any of the examples provided in the usage message.
 
