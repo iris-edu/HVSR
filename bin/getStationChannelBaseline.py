@@ -37,6 +37,8 @@
  the default values for the parameters between {} may be provided in the parameter file
 
  HISTORY:
+     2020-06-04 IRIS DMC Product Team (Manoch): V.2020.156, addressed the warning about Adding an axes using the same
+                                                arguments as a previous axes currently reuses the earlier instance.
      2019-06-19 IRIS DMC Product Team (Manoch): V.2019.171, added Peterson 1993 NLNM and NHNM to the plots and updated
                                                 color scale.
      2019-06-03 IRIS DMC Product Team (Manoch): V.2019.154, addressed the issue with start and end dates to be the same,
@@ -53,7 +55,7 @@
 
 """
 
-version = 'V.2019.171'
+version = 'V.2020.156'
 
 import os
 import sys
@@ -227,6 +229,7 @@ channel_index = -1
 got_data = False
 channels = channel_list.strip().replace(' ', '').split(',')
 psd_count = {}
+ax2 = None
 for channel in channels:
     channel_index += 1
     X = list()
@@ -415,10 +418,11 @@ for channel in channels:
         plt.legend(loc='upper left')
 
         # Create a second axes for the colorbar.
-        ax2 = fig.add_axes([0.92, 0.4, 0.01, 0.4])
-        cbar = fig.colorbar(im, ax2, orientation='vertical')
-        cbar.set_label('Probability (%)', size=6, rotation=270, labelpad=9)
-        plt.clim(param.pMin, param.pMax)
+        if ax2 is None:
+            ax2 = fig.add_axes([0.92, 0.4, 0.01, 0.4])
+            cbar = fig.colorbar(im, ax2, orientation='vertical')
+            cbar.set_label('Probability (%)', size=6, rotation=270, labelpad=9)
+            plt.clim(param.pMin, param.pMax)
 
 if do_plot > 0 and got_data:
     plot_fileName = os.path.join(param.imageDirectory,
