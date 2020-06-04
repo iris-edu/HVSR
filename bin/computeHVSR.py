@@ -45,6 +45,7 @@ OUTPUTS:
  the default values for the parameters between {} may be provided in the parameter file
 
  HISTORY:
+    2020-06-04 IRIS DMC Product Team (Manoch): V.2020.156, addressed the check mark character display issue on Windows.
     2020-06-03 IRIS DMC Product Team (Manoch): V.2020.155, addressed the UTF-8 character issue on Windows.
     2020-02-24 IRIS DMC Product Team (Manoch): V.2020.055, now the peak report is also writen to a file under the
                                                data/report directory.
@@ -175,7 +176,8 @@ def usage():
           .format(param.chan, param.xtype, param.verbose, param.plotbad, param.plotnnm, param.plotpsd, param.plotpdf,
                   param.yLim[1],
                   param.n, param.removeoutliers, param.method, param.showplot))
-    print('\n{} net=TA sta=TCOL loc=-- chan=BHZ,BHN,BHE start=2013-01-01 end=2013-01-01 plot=1 plotbad=0 '
+    print('\n\nExamples:'
+          '\n{} net=TA sta=TCOL loc=-- chan=BHZ,BHN,BHE start=2013-01-01 end=2013-01-01 plot=1 plotbad=0 '
           'plotpsd=0 plotpdf=1 verbose=1 ymax=5 xtype=frequency n=1 removeoutliers=0 method=4'.format(script))
     print('\n{} net=TA sta=TCOL loc=-- chan=BHZ,BHN,BHE start=2013-01-01 end=2013-02-01 plot=1 plotbad=0 '
           'plotpsd=0 plotpdf=1 verbose=1 ymax=5 xtype=frequency n=1 removeoutliers=1 method=4'.format(script))
@@ -199,6 +201,15 @@ def usage():
            '\t\tftp://ftp.geo.uib.no/pub/seismo/SOFTWARE/SESAME/USER-GUIDELINES/SESAME-HV-User-Guidelines.pdf')
 
     print ('\n\n\n')
+
+
+def check_mark():
+    """The default Windows terminal is not able to display the check mark character correctly.
+       This function returns another displayable character if platform is Windows"""
+    check = get_char(u'\u2714')
+    if sys.platform == 'win32':
+        check = get_char(u'\u039E')
+    return check
 
 
 def get_char(in_char):
@@ -257,7 +268,7 @@ def print_peak_report(_station_header, _report_header, _peak, _reportinfo, _min_
 
         # Write the report to the report file.
         report_file.write('\n\nPeaks:\n'
-                          'Parameters and ranking (A0: peak amplitude, f0: peak frequency):\n\n'
+                          'Parameters and ranking (A0: peak amplitude, f0: peak frequency, {}: satisfied):\n\n'
                           '\t- amplitude clarity conditions:\n'
                           '\t\t. there exist one frequency f-, lying between f0/4 and f0, such that A0 / A(f-) > 2\n'
                           '\t\t. there exist one frequency f+, lying between f0 and 4*f0, such that A0 / A(f+) > 2\n'
@@ -266,11 +277,12 @@ def print_peak_report(_station_header, _report_header, _peak, _reportinfo, _min_
                           '\t\t. peak appear within +/-5% on HVSR curves of mean +/- one standard deviation (f0+/f0-)\n'
                           '\t\t. {}f lower than a frequency dependent threshold {}(f)\n'
                           '\t\t. {}A lower than a frequency dependent threshold log {}(f)\n'.
-                          format(get_char('sigma'), get_char('epsilon'), get_char('sigma'), get_char('teta')))
+                          format(check_mark(), get_char('sigma'), get_char('epsilon'), get_char('sigma'), 
+                                 get_char('teta')))
 
         # Also output the report to the terminal.
         print('\n\nPeaks:\n'
-              'Parameters and ranking (A0: peak amplitude, f0: peak frequency):\n\n'
+              'Parameters and ranking (A0: peak amplitude, f0: peak frequency, {}: satisfied)):\n\n'
               '\t- amplitude clarity conditions:\n'
               '\t\t. there exist one frequency f-, lying between f0/4 and f0, such that A0 / A(f-) > 2\n'
               '\t\t. there exist one frequency f+, lying between f0 and 4*f0, such that A0 / A(f+) > 2\n'
@@ -279,7 +291,8 @@ def print_peak_report(_station_header, _report_header, _peak, _reportinfo, _min_
               '\t\t. peak appear within +/-5% on HVSR curves of mean +/- one standard deviation (f0+/f0-)\n'
               '\t\t. {}f lower than a frequency dependent threshold {}(f)\n'
               '\t\t. {}A lower than a frequency dependent threshold log {}(f)\n'.
-              format(get_char('sigma'), get_char('epsilon'), get_char('sigma'), get_char('teta')), flush=True)
+              format(check_mark(), get_char('sigma'), get_char('epsilon'), get_char('sigma'), get_char('teta')), 
+              flush=True)
 
     for _i, _peak_value in enumerate(_peak):
         _index.append(_i)
@@ -488,7 +501,7 @@ def check_clarity(_x, _y, _peak, do_rank=False):
     for _i in range(len(_peak)):
 
         if float(_peak[_i]['A0']) > _a0:
-            _peak[_i]['Report']['A0'] = '%10.2f > %0.1f %1s' % (_peak[_i]['A0'], _a0, get_char(u'\u2714'))
+            _peak[_i]['Report']['A0'] = '%10.2f > %0.1f %1s' % (_peak[_i]['A0'], _a0, check_mark())
             _peak[_i]['Score'] += 1
         else:
             _peak[_i]['Report']['A0'] = '%10.2f > %0.1f  ' % (_peak[_i]['A0'], _a0)
@@ -503,7 +516,7 @@ def check_clarity(_x, _y, _peak, do_rank=False):
             # There exist one frequency f-, lying between f0/4 and f0, such that A0 / A(f-) > 2.
             if (float(_peak[_i]['f0']) / 4.0 <= _x[_j] < float(_peak[_i]['f0'])) and \
                     float(_peak[_i]['A0']) / _y[_j] > 2.0:
-                _peak[_i]['f-'] = '%10.3f %1s' % (_x[_j], get_char(u'\u2714'))
+                _peak[_i]['f-'] = '%10.3f %1s' % (_x[_j], check_mark())
                 _peak[_i]['Score'] += 1
                 break
 
@@ -516,7 +529,7 @@ def check_clarity(_x, _y, _peak, do_rank=False):
             # There exist one frequency f+, lying between f0 and 4*f0, such that A0 / A(f+) > 2.
             if float(_peak[_i]['f0']) * 4.0 >= _x[_j] > float(_peak[_i]['f0']) and \
                     float(_peak[_i]['A0']) / _y[_j] > 2.0:
-                _peak[_i]['f+'] = '%10.3f %1s' % (_x[_j], get_char(u'\u2714'))
+                _peak[_i]['f+'] = '%10.3f %1s' % (_x[_j], check_mark())
                 _peak[_i]['Score'] += 1
                 break
 
@@ -566,7 +579,7 @@ def check_freq_stability(_peak, _peakm, _peakp):
             if _peak[_i]['f0'] * 0.95 <= _peakp[_j]['f0'] <= _peak[_i]['f0'] * 1.05:
                 if _found_m[_i]:
                     _peak[_i]['Report']['P+'] = '%0.3f within ±5%s of %0.3f %1s' % (
-                        _peakp[_j]['f0'], '%', _peak[_i]['f0'], get_char(u'\u2714'))
+                        _peakp[_j]['f0'], '%', _peak[_i]['f0'], check_mark())
                     _peak[_i]['Score'] += 1
                 else:
                     _peak[_i]['Report']['P+'] = '%0.3f within ±5%s of %0.3f %1s' % (
@@ -601,7 +614,7 @@ def check_stability(_stdf, _peak, _hvsr_log_std, rank):
             _e = 0.25
             if _stdf[_i] < _e * _this_peak['f0']:
                 _peak[_i]['Report']['Sf'] = '%10.4f < %0.2f * %0.3f %1s' % (_stdf[_i], _e, _this_peak['f0'],
-                                                                            get_char(u'\u2714'))
+                                                                            check_mark())
                 _this_peak['Score'] += 1
             else:
                 _peak[_i]['Report']['Sf'] = '%10.4f < %0.2f * %0.3f  ' % (_stdf[_i], _e, _this_peak['f0'])
@@ -609,7 +622,7 @@ def check_stability(_stdf, _peak, _hvsr_log_std, rank):
             _t = 0.48
             if _hvsr_log_std[_i] < _t:
                 _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f %1s' % (_hvsr_log_std[_i], _t,
-                                                                    get_char(u'\u2714'))
+                                                                    check_mark())
                 _this_peak['Score'] += 1
             else:
                 _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f  ' % (_hvsr_log_std[_i], _t)
@@ -618,7 +631,7 @@ def check_stability(_stdf, _peak, _hvsr_log_std, rank):
             _e = 0.2
             if _stdf[_i] < _e * _this_peak['f0']:
                 _peak[_i]['Report']['Sf'] = '%10.4f < %0.2f * %0.3f %1s' % (_stdf[_i], _e, _this_peak['f0'],
-                                                                            get_char(u'\u2714'))
+                                                                            check_mark())
                 _this_peak['Score'] += 1
             else:
                 _peak[_i]['Report']['Sf'] = '%10.4f < %0.2f * %0.3f  ' % (_stdf[_i], _e, _this_peak['f0'])
@@ -626,7 +639,7 @@ def check_stability(_stdf, _peak, _hvsr_log_std, rank):
             _t = 0.40
             if _hvsr_log_std[_i] < _t:
                 _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f %1s' % (_hvsr_log_std[_i], _t,
-                                                                    get_char(u'\u2714'))
+                                                                    check_mark())
                 _this_peak['Score'] += 1
             else:
                 _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f  ' % (_hvsr_log_std[_i], _t)
@@ -635,14 +648,14 @@ def check_stability(_stdf, _peak, _hvsr_log_std, rank):
             _e = 0.15
             if _stdf[_i] < _e * _this_peak['f0']:
                 _peak[_i]['Report']['Sf'] = '%10.4f < %0.2f * %0.3f %1s' % (_stdf[_i], _e, _this_peak['f0'],
-                                                                            get_char(u'\u2714'))
+                                                                            check_mark())
                 _this_peak['Score'] += 1
             else:
                 _peak[_i]['Report']['Sf'] = '%10.4f < %0.2f * %0.3f  ' % (_stdf[_i], _e, _this_peak['f0'])
 
             _t = 0.3
             if _hvsr_log_std[_i] < _t:
-                _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f %1s' % (_hvsr_log_std[_i], _t, get_char(u'\u2714'))
+                _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f %1s' % (_hvsr_log_std[_i], _t, check_mark())
                 _this_peak['Score'] += 1
             else:
                 _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f  ' % (_hvsr_log_std[_i], _t)
@@ -651,14 +664,14 @@ def check_stability(_stdf, _peak, _hvsr_log_std, rank):
             _e = 0.1
             if _stdf[_i] < _e * _this_peak['f0']:
                 _peak[_i]['Report']['Sf'] = '%10.4f < %0.2f * %0.3f %1s' % (_stdf[_i], _e, _this_peak['f0'],
-                                                                            get_char(u'\u2714'))
+                                                                            check_mark())
                 _this_peak['Score'] += 1
             else:
                 _peak[_i]['Report']['Sf'] = '%10.4f < %0.2f * %0.3f  ' % (_stdf[_i], _e, _this_peak['f0'])
 
             _t = 0.25
             if _hvsr_log_std[_i] < _t:
-                _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f %1s' % (_hvsr_log_std[_i], _t, get_char(u'\u2714'))
+                _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f %1s' % (_hvsr_log_std[_i], _t, check_mark())
                 _this_peak['Score'] += 1
             else:
                 _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f  ' % (_hvsr_log_std[_i], _t)
@@ -667,14 +680,14 @@ def check_stability(_stdf, _peak, _hvsr_log_std, rank):
             _e = 0.05
             if _stdf[_i] < _e * _this_peak['f0']:
                 _peak[_i]['Report']['Sf'] = '%10.4f < %0.2f * %0.3f %1s' % (_stdf[_i], _e, _this_peak['f0'],
-                                                                            get_char(u'\u2714'))
+                                                                            check_mark())
                 _this_peak['Score'] += 1
             else:
                 _peak[_i]['Report']['Sf'] = '%10.4f < %0.2f * %0.3f  ' % (_stdf[_i], _e, _this_peak['f0'])
 
             _t = 0.2
             if _hvsr_log_std[_i] < _t:
-                _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f %1s' % (_hvsr_log_std[_i], _t, get_char(u'\u2714'))
+                _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f %1s' % (_hvsr_log_std[_i], _t, check_mark())
                 _this_peak['Score'] += 1
             else:
                 _peak[_i]['Report']['Sa'] = '%10.4f < %0.2f  ' % (_hvsr_log_std[_i], _t)
@@ -864,6 +877,7 @@ else:
     from obspy.imaging.cm import pqlx
     from obspy.signal.spectral_estimation import get_nlnm, get_nhnm
 
+ax2 = None
 # Do one channel at a time.
 channel_index = -1
 for channel in sorted_channel_list:
@@ -1150,7 +1164,7 @@ for channel in sorted_channel_list:
         plt.legend(prop={'size': 6}, loc='lower left')
 
         # Create a second axes for the colorbar.
-        if plot_pdf:
+        if plot_pdf and ax2 is None:
             ax2 = fig.add_axes([0.92, 0.4, 0.01, 0.4])
             cbar = fig.colorbar(im, ax2, orientation='vertical')
             cbar.set_label('Probability (%)', size=9, rotation=270, labelpad=6)
@@ -1278,7 +1292,7 @@ fileLib.mkdir(param.hvsrDirectory, path)
 out_file_name = os.path.join(param.hvsrDirectory, path, fileLib.hvsrFileName(network, station, location, start, end))
 
 outFile = open(out_file_name, 'w')
-print('OUT FILE:', out_file_name)
+msgLib.info(f'Output file: {out_file_name}')
 count = -1
 
 # compute one x-value (period or frequency) at a time to also compute standard deviation
