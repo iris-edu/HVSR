@@ -165,8 +165,8 @@ computeHVSR.py net=TA sta=E25K loc= chan=BHZ,BHN,BHE start=2017-07-01 end=2017-0
 CITATION:
 
 To cite the use of this software please cite:
-Manochehr Bahavar, Zack J Spica, Francisco J Sánchez-Sesma, Chad Trabant, Arash Zandieh, Gabriel Toro; 
-    Horizontal-to-Vertical Spectral Ratio (HVSR) IRIS Station Toolbox. Seismological Research Letters, under review.
+
+Manochehr Bahavar, Zack J. Spica, Francisco J. Sánchez‐Sesma, Chad Trabant, Arash Zandieh, Gabriel Toro; Horizontal‐to‐Vertical Spectral Ratio (HVSR) IRIS Station Toolbox. Seismological Research Letters doi: https://doi.org/10.1785/0220200047
 
 Or cite the following DOI:
     10.17611/dp/hvsrtool.1
