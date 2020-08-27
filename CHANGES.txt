@@ -5,7 +5,12 @@ bin/computeHVSR.py
 
 bin/getStationChannelBaseline.py
     2020-06-04 IRIS DMC Product Team (Manoch): V.2020.156, addressed the warning about Adding an axes using the same
-                                                arguments as a previous axes currently reuses the earlier instance.
+
+========================================                                                arguments as a previous axes currently reuses the earlier instance.
+R.1.3 Release
+
+bin/computeHVSR.py
+    2020-08-27 IRIS DMC Product Team (Manoch): V.2020.240, fixed channel sorting order for horizontal 1 & 2 directions.
 
 INSTALL.txt
     2020-06-04 minor edits
