@@ -45,6 +45,7 @@ OUTPUTS:
  the default values for the parameters between {} may be provided in the parameter file
 
  HISTORY:
+    2020-08-27 IRIS DMC Product Team (Manoch): V.2020.240, fixed channel sorting order for horizontal 1 &2 directions.
     2020-06-04 IRIS DMC Product Team (Manoch): V.2020.156, addressed the check mark character display issue on Windows.
     2020-06-03 IRIS DMC Product Team (Manoch): V.2020.155, addressed the UTF-8 character issue on Windows.
     2020-02-24 IRIS DMC Product Team (Manoch): V.2020.055, now the peak report is also writen to a file under the
@@ -780,7 +781,7 @@ if len(args) <= 1:
 
 verbose = int(get_param(args, 'verbose', msgLib, -1, be_verbose=param.verbose))
 if verbose >= 0:
-    print ('\n[INFO]', sys.argv[0], version)
+    print('\n[INFO]', sys.argv[0], version)
 
 report_information = int(get_param(args, 'report_information', msgLib, 1, be_verbose=verbose))
 
@@ -792,7 +793,7 @@ if len(channelList) < 3:
     msgLib.error('need 3 channels!', 1)
     sys.exit()
 
-sorted_channel_list = channelList
+sorted_channel_list = channelList.copy()
 for channel in channelList:
     sorted_channel_list[channel_order[channel[2]]] = channel
 
