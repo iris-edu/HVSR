@@ -3,9 +3,7 @@
  Data Products Team
  Horizontal to Vertical Spectral Ratio (HVSR) Toolbox
 
- 2020-02-24
- V.2020.055
-
+ 2020-03-16
 ------------------------------------------------------------------------------------------------------------------------
 
  DESCRIPTION:
@@ -189,15 +187,6 @@ Guidelines for the Implementation of the H/V Spectral Ratio Technique on Ambient
 	2004  Project No. EVG1-CT-2000-00026 SESAME.
 		ftp://ftp.geo.uib.no/pub/seismo/SOFTWARE/SESAME/USER-GUIDELINES/SESAME-HV-User-Guidelines.pdf
 
-
-
-
- HISTORY
-    - 2020-02-24 Release R.1.1
-    - 2019-07-31  Release R.1.0
-    - 2018-07-10: prerelease V.2018.191
-    - 2017-11-28: computeHVSR V.2017.332
-    - 2017-11-16: initial version V.2017.320
  
  COMMENTS/QUESTIONS:
 
