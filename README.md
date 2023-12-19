@@ -174,14 +174,10 @@ REFERENCES:
 Albarello, Dario & Lunedei, Enrico. (2013). Combining horizontal ambient vibration components for H/V 
 	spectral ratio estimates. Geophysical Journal International. 194. 936-951. 10.1093/gji/ggt130.
 
-Francisco J Sanchez-Sesma, Francisco & Rodriguez, Miguel & Iturraran-Viveros, Ursula & Luzon, Francisco
-	& Campillo, Michel & Margerin, Ludovic & Garcia-Jerez, Antonio & Suarez, Martha & Santoyo, Miguel &
+Francisco J Sanchez-Sesma, Francisco & Rodriguez, Miguel & Iturraran-Viveros, Ursula & Luzon, Francisco & Campillo, Michel & Margerin, Ludovic & Garcia-Jerez, Antonio & Suarez, Martha & Santoyo, Miguel & Rodriguez-Castellanos, A. (2011). A theory for microtremor H/V spectral ratio: Application for a layered medium. Geophysical Journal International. 186. 221-225. 10.1111/j.1365-246X.2011.05064.x.
 
 Peterson, J. (1993). Observations and modeling of seismic background noise, U.S. Geological Survey
 	open-file report (Vol. 93-322, p. 94). Albuquerque: U.S. Geological Survey.
-
-Rodriguez-Castellanos, A. (2011). A theory for microtremor H/V spectral ratio: Application for a
-	layered medium. Geophysical Journal International. 186. 221-225. 10.1111/j.1365-246X.2011.05064.x.
 
 Guidelines for the Implementation of the H/V Spectral Ratio Technique on Ambient Vibrations, December
 	2004  Project No. EVG1-CT-2000-00026 SESAME.
