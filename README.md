@@ -1,9 +1,9 @@
- Incorporated Research Institutions for Seismology (IRIS)
+ EarthScope Consortium
  Data Management Center (DMC)
  Data Products Team
  Horizontal to Vertical Spectral Ratio (HVSR) Toolbox
 
- 2023-12-19
+ 2023-12-20
 ------------------------------------------------------------------------------------------------------------------------
 
  DESCRIPTION:
@@ -164,20 +164,18 @@ CITATION:
 
 To cite the use of this software please cite:
 
-Manochehr Bahavar, Zack J. Spica, Francisco J. Sánchez‐Sesma, Chad Trabant, Arash Zandieh, Gabriel Toro; Horizontal‐to‐Vertical Spectral Ratio (HVSR) IRIS Station Toolbox. Seismological Research Letters doi: https://doi.org/10.1785/0220200047
+Manochehr Bahavar, Zack J. Spica, Francisco J. Sánchez‐Sesma, Chad Trabant, Arash Zandieh & Gabriel Toro (2020). Horizontal‐to‐Vertical Spectral Ratio (HVSR) IRIS Station Toolbox. Seismological Research Letters doi: https://doi.org/10.1785/0220200047
 
 Or cite the following DOI:
     10.17611/dp/hvsrtool.1
 
 REFERENCES:
 
-Albarello, Dario & Lunedei, Enrico. (2013). Combining horizontal ambient vibration components for H/V 
-	spectral ratio estimates. Geophysical Journal International. 194. 936-951. 10.1093/gji/ggt130.
+Dario Albarello & Enrico Lunedei (2013). Combining horizontal ambient vibration components for H/V spectral ratio estimates. Geophysical Journal International. 194. 936-951. 10.1093/gji/ggt130.
 
-Francisco J Sanchez-Sesma, Francisco & Rodriguez, Miguel & Iturraran-Viveros, Ursula & Luzon, Francisco & Campillo, Michel & Margerin, Ludovic & Garcia-Jerez, Antonio & Suarez, Martha & Santoyo, Miguel & Rodriguez-Castellanos, A. (2011). A theory for microtremor H/V spectral ratio: Application for a layered medium. Geophysical Journal International. 186. 221-225. 10.1111/j.1365-246X.2011.05064.x.
+Francisco J. Sánchez-Sesma, Miguel Rodriguez, Ursula Iturraran-Viveros, Francisco Luzón, Michel Campillo, Ludovic Margerin, Antonio Garcia-Jerez, Martha Suarez, Miguel A. Santoyo & Alejandro Rodriguez-Castellanos (2011). A theory for microtremor H/V spectral ratio: Application for a layered medium. Geophysical Journal International. 186. 221-225. 10.1111/j.1365-246X.2011.05064.x.
 
-Peterson, J. (1993). Observations and modeling of seismic background noise, U.S. Geological Survey
-	open-file report (Vol. 93-322, p. 94). Albuquerque: U.S. Geological Survey.
+Jon R. Peterson (1993). Observations and modeling of seismic background noise. U.S. Geological Survey open-file report (Vol. 93-322, p. 94). Albuquerque: U.S. Geological Survey.
 
 Guidelines for the Implementation of the H/V Spectral Ratio Technique on Ambient Vibrations, December
 	2004  Project No. EVG1-CT-2000-00026 SESAME.
