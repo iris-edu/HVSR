@@ -1,6 +1,5 @@
  EarthScope Consortium
- Data Management Center (DMC)
- Data Products Team
+
  Horizontal to Vertical Spectral Ratio (HVSR) Toolbox
 
  2023-12-20
